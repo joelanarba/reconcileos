@@ -46,7 +46,7 @@ After the browser services stopped, a separate Uvicorn process reopened the same
 
 ## Remaining Work
 
-The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. AI validation is complete with controlled responses. Final learner review and the learning wrap-up remain open.
+The learner has retried other files and confirmed that the revised importer works. No additional import fix was requested. This is learner confirmation of import behavior, separate from the recorded automated checks. Review of the remaining core journey, explicit overall readiness, and the learning wrap-up remain open. AI validation is complete with controlled responses.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.
 

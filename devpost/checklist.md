@@ -23,7 +23,7 @@ Commands referring to backend tests run from backend using its virtual environme
   Learner check: Open http://127.0.0.1:5173, import the supplied small order/payment fixtures, run reconciliation, and open one match and one unresolved case. Report anything confusing or inconsistent with the intended operational layout. This is the planned early hands-on checkpoint before continuing.
   Commit: `feat: reconcile imported orders and payments`
 
-  Mechanical verification: dependency installation succeeded on Python 3.14.3 and Node.js 24.13.1. Alembic initialized the ordinary local database and fresh isolated test databases; schema parity and actual foreign-key enforcement passed. Initial checks passed 52 backend tests, 6 frontend tests, and one real browser workflow. After actual learner feedback, the importer was revised for CSV/Excel recognition, mapping, and preview review. Revised verification passed 68 backend tests, 8 frontend tests, the production build, pip check, and 3 real Edge browser tests. Original financial fixture results remained unchanged. Screenshots were inspected. The Starlette HTTPX deprecation warning remains recorded. Commit 262b08b records the verified slice under the learner's author and committer identity. The revised import workflow remains part of the learner's final retry.
+  Mechanical verification: dependency installation succeeded on Python 3.14.3 and Node.js 24.13.1. Alembic initialized the ordinary local database and fresh isolated test databases; schema parity and actual foreign-key enforcement passed. Initial checks passed 52 backend tests, 6 frontend tests, and one real browser workflow. After actual learner feedback, the importer was revised for CSV/Excel recognition, mapping, and preview review. Revised verification passed 68 backend tests, 8 frontend tests, the production build, pip check, and 3 real Edge browser tests. Original financial fixture results remained unchanged. Screenshots were inspected. The Starlette HTTPX deprecation warning remains recorded. Commit 262b08b records the verified slice under the learner's author and committer identity. The learner subsequently retried other files and confirmed that the revised importer works.
 
 - [x] **2. Reconcile settlement evidence and inspect complete financial summaries**
   Becomes usable: The operator imports all three sources and sees exact settlement relationships, configured fee checks, missing settlement evidence, complete run summaries, a useful dashboard, and filterable evidence-backed results.
@@ -63,14 +63,14 @@ Commands referring to backend tests run from backend using its virtual environme
 
 ## Hands-on Checkpoints
 
-- [x] Early usable behavior explored: the learner tried importing files and reported rejection of ordinary exports, missing Excel support, strict source naming, and concern about the unfinished product. The authorized import revision was implemented and mechanically verified; the final learner review will retry the affected workflow. This records reported feedback, not an assertion that the learner has already retried the revision.
+- [x] Early usable behavior explored: the learner tried importing files and reported rejection of ordinary exports, missing Excel support, strict source naming, and concern about the unfinished product. The authorized import revision was implemented and mechanically verified. The learner has now retried other files and confirmed that the revised importer works. This confirms the affected import workflow; it does not establish final review of every screen.
 - [ ] Final kick-the-tires exploration and feedback completed: after slice 4, the learner explores the complete core journey and relevant awkward inputs; agreed revisions are recorded and verified.
 
 ## Final Review
 
 - [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
 
-Early import feedback is recorded above. Final learner review was requested after the ordinary backend restart and final checks; observations are pending. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
+The learner confirmed that the revised importer now works with other files. No additional import change was requested. Review of reconciliation, investigation actions, report export, and explicit overall readiness remains unconfirmed. The remaining readiness question has been presented without marking the complete proof of concept reviewed. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
 
 ## Code Tour and App Map
 
