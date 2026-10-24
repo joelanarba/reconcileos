@@ -44,6 +44,11 @@
   --amber:#A66A20
 }
 .case-content { padding:22px; }
+.auth-screen { min-height:100vh; display:grid; place-items:center; padding:24px; }
+.auth-panel { width:100%; max-width:470px; padding:32px; }
+.auth-panel h1 { font-size:23px; margin-top:28px; }
+.auth-panel>.button { margin:20px 0 12px; }
+.auth-brand { display:flex; align-items:center; gap:12px; color:var(--navy); font-size:20px; }
 .consent-control { display:flex; align-items:flex-start; gap:10px; font-size:12px; margin:14px 0; }
 .consent-control input { flex:none; margin-top:3px; }
 .ai-json { white-space:pre-wrap; overflow-wrap:anywhere; background:var(--paper); padding:12px; font-size:11px; }

@@ -3,6 +3,7 @@
 /.claude/
 /agent/
 /backend/data/
+/deploy/.local/
 .env
 .env.*
 !.env.example

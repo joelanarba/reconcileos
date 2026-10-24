@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Download, FileText, Upload, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { api, API_BASE } from '../../lib/api'
+import { api, downloadCsv } from '../../lib/api'
 import type { Batch, ImportOptions, Page, PreviewRow, SourceType, Workspace } from '../../types/api'
 import { Badge, displayTime, EmptyState, ErrorMessage, Loading, Pagination } from '../../components/common'
 import { formatMoney, PRECISION } from '../../lib/money'
@@ -18,6 +18,7 @@ export function ImportsPage({ workspace }: { workspace?: Workspace } = {}) {
   const [historyPage, setHistoryPage] = useState(1)
   const [invalidOnly, setInvalidOnly] = useState(false)
   const [editing, setEditing] = useState<PreviewRow | null>(null)
+  const template = useMutation({ mutationFn: () => downloadCsv(`/templates/${source}`, `${source}-template.csv`) })
   const uploadLimit = workspace?.max_upload_bytes || 10485760
   const batchId = params.get('batch') || ''
   const history = useQuery({ queryKey: ['imports', historyPage], queryFn: () => api<Page<Batch>>(`/imports?page=${historyPage}`) })
@@ -65,7 +66,7 @@ export function ImportsPage({ workspace }: { workspace?: Workspace } = {}) {
         <div className="file-area"><Upload size={23} strokeWidth={1.5} /><label htmlFor="csv-file">Select a file</label><p>CSV, TSV, XLSX, or XLS. We recognize common export formats and column names.</p><input id="csv-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls,.xlsm" onChange={event => { setFile(event.target.files?.[0] || null); upload.reset() }} /><p>Up to {(uploadLimit / 1048576).toLocaleString('en-GB', { maximumFractionDigits: 1 })} MiB and 10,000 transaction rows.</p></div>
         <ErrorMessage error={upload.error} /><div className="form-footer"><span className="muted">Nothing is imported until you confirm.</span><button className="button primary" type="submit" disabled={!file || upload.isPending}><Upload size={15} />{upload.isPending ? 'Validating...' : 'Preview file'}</button></div>
       </form></section>
-      <aside className="panel import-guide"><div className="guide-icon"><FileText size={20} /></div><h2>Use your existing export</h2><p>You do not need to rename columns or convert an Excel file. We suggest the matches; you can adjust them in the preview.</p><a className="button secondary full-width" href={`${API_BASE}/templates/${source}`}><Download size={15} />Download {source} template</a><hr /><h3>Before you confirm</h3><ul className="checklist"><li><Check size={14} />Check recognized column matches.</li><li><Check size={14} />Review rows needing attention.</li><li><Check size={14} />Confirm the interpreted values.</li></ul><p className="footnote">Templates are optional. Original source cells and interpretation choices are retained.</p></aside></div>
+      <aside className="panel import-guide"><div className="guide-icon"><FileText size={20} /></div><h2>Use your existing export</h2><p>You do not need to rename columns or convert an Excel file. We suggest the matches; you can adjust them in the preview.</p><button className="button secondary full-width" disabled={template.isPending} onClick={() => template.mutate()}><Download size={15} />Download {source} template</button><ErrorMessage error={template.error} /><hr /><h3>Before you confirm</h3><ul className="checklist"><li><Check size={14} />Check recognized column matches.</li><li><Check size={14} />Review rows needing attention.</li><li><Check size={14} />Confirm the interpreted values.</li></ul><p className="footnote">Templates are optional. Original source cells and interpretation choices are retained.</p></aside></div>
     {batchId && <section className="panel preview-panel"><div className="panel-heading"><div><h2>Import preview</h2><p>{batch?.filename || 'Loading selected file'}</p></div>{batch && <Badge value={batch.status} />}</div>
       <ErrorMessage error={preview.error} />{preview.isLoading && <Loading />}
       {batch && <>

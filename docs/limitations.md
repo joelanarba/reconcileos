@@ -16,4 +16,4 @@ This is a local proof of concept with automated checks and a pending final learn
 - Database-neutral models and an included driver do not establish PostgreSQL correctness. PostgreSQL migration and integration execution, data transfer, and AWS deployment are unverified.
 - The current backend TestClient emits a Starlette deprecation warning while using HTTPX. Tests pass with that warning recorded.
 
-Later public deployment requires real authentication, access controls, TLS, secrets management, backup and restore verification, and independent database testing. Changing DATABASE_URL connects to another database without transferring existing SQLite records.
+Hosted access preparation now includes Cognito sign-in and backend enforcement of trusted Gateway identities. Those controls have controlled local tests; actual Cognito/Gateway integration, TLS, secret storage, backup and restore, and PostgreSQL behavior still require deployment verification. Local mode remains unauthenticated. Changing DATABASE_URL connects to another database without transferring existing SQLite records.

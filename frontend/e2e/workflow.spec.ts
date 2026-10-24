@@ -9,7 +9,7 @@ test('real CSV import, validation, reconciliation, filters, and source evidence'
   await page.goto('/imports')
   await expect(page.getByRole('heading', { name: 'Imports', exact: true })).toBeVisible()
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('link', { name: 'Download orders template' }).click()
+  await page.getByRole('button', { name: 'Download orders template' }).click()
   expect((await downloadPromise).suggestedFilename()).toBe('orders-template.csv')
   await page.getByLabel('Select a file').setInputFiles(path.resolve('../sample-data/slice1/invalid-orders.csv'))
   await page.getByRole('button', { name: 'Preview file' }).click()
@@ -87,14 +87,14 @@ test('real CSV import, validation, reconciliation, filters, and source evidence'
   await page.getByRole('link', { name: 'Reports', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Reports', exact: true })).toBeVisible()
   const summaryDownload = page.waitForEvent('download')
-  await page.getByRole('link', { name: 'Export summary CSV' }).click()
+  await page.getByRole('button', { name: 'Export summary CSV' }).click()
   const downloaded = await summaryDownload
   expect(downloaded.suggestedFilename()).toContain('-summary.csv')
   expect(await readFile((await downloaded.path())!, 'utf8')).toContain('matched_order_value,GHS,1122800,11228.00')
   await page.screenshot({ path: 'test-results/reports-desktop.png', fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('link', { name: 'Imports', exact: true }).click()
-  await expect(page.getByRole('link', { name: /Download .* template/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Download .* template/ })).toBeVisible()
   const narrowLayout = await page.evaluate(() => ({
     viewport: innerWidth,
     document: document.documentElement.scrollWidth,

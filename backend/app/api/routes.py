@@ -19,9 +19,10 @@ from app.services.reconciliation.service import create_run
 from app.services.reconciliation.engine import RULE_VERSION
 from app.services.investigations.review import active_matches, current_summary
 from app.services.investigations.ai import availability
+from app.core.security import authorize_operator
 
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", dependencies=[Depends(authorize_operator)])
 
 
 def get_session(request: Request):
@@ -89,15 +90,15 @@ def matches_search(run, evidence, search):
 
 
 @router.get("/health")
-def health(session=Depends(get_session)):
+def health(request: Request, session=Depends(get_session)):
     workspace = session.get(Workspace, WORKSPACE_ID)
-    return {"status": "ok" if workspace else "not_ready", "mode": "local", "database": "ready" if workspace else "unavailable"}
+    return {"status": "ok" if workspace else "not_ready", "mode": request.app.state.settings.app_mode, "database": "ready" if workspace else "unavailable"}
 
 
 @router.get("/workspace")
 def workspace(request: Request, session=Depends(get_session)):
     data = entity_data(session.get(Workspace, WORKSPACE_ID))
-    return public(data | {"operator": request.app.state.settings.local_operator, "mode": "local", "currency_precision": PRECISION, "providers": PROVIDERS,
+    return public(data | {"operator": request.state.actor, "mode": request.app.state.settings.app_mode, "currency_precision": PRECISION, "providers": PROVIDERS,
                           "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes,
                           "fee_configuration": fee_configuration(request.app.state.settings), "ai": availability(request.app.state.settings)})
 
@@ -143,17 +144,17 @@ def confirm(batch_id: str, request: Request, payload: dict | None = Body(default
     revision = (payload or {}).get("expected_revision")
     if revision is not None and (type(revision) is not int or revision < 1):
         raise AppError("invalid_revision", "Refresh the preview before confirming.")
-    return batch_data(confirm_batch(session, batch_id, request.app.state.settings.local_operator, revision))
+    return batch_data(confirm_batch(session, batch_id, request.state.actor, revision))
 
 
 @router.post("/imports/{batch_id}/mapping")
 def apply_mapping(batch_id: str, options: ImportOptions, request: Request, session=Depends(get_session)):
-    return batch_data(remap_batch(session, request.app.state.settings, batch_id, options, request.app.state.settings.local_operator))
+    return batch_data(remap_batch(session, request.app.state.settings, batch_id, options, request.state.actor))
 
 
 @router.post("/runs")
 def run_reconciliation(request: Request, session=Depends(get_session)):
-    run = create_run(session, request.app.state.settings.local_operator, fee_configuration(request.app.state.settings))
+    run = create_run(session, request.state.actor, fee_configuration(request.app.state.settings))
     return run_data(run, session.get(Workspace, WORKSPACE_ID).input_revision, session)
 
 

@@ -5,9 +5,10 @@ from fastapi.responses import Response
 
 from app.api.routes import get_run, get_session, public
 from app.services.reports.export import export_report, report_data
+from app.core.security import authorize_operator
 
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api", dependencies=[Depends(authorize_operator)])
 
 
 @router.get("/reports/{run_id}")

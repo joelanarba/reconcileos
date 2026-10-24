@@ -110,7 +110,7 @@ SQLite foreign keys are enabled on every connection. Explicit transaction handli
 
 PostgreSQL configuration uses postgresql+psycopg://USER:PASSWORD@HOST:5432/reconcileos with the included Psycopg driver. This example is not a credential. PostgreSQL migrations, integration behavior, and deployment have not been executed. Changing DATABASE_URL does not transfer SQLite data. A future empty database can be migrated and source files deliberately re-imported; carrying over review history requires a separately verified transfer process.
 
-AWS resources and credentials are not accessed. Authentication, access controls, TLS, secret management, and independent PostgreSQL checks are prerequisites for a later public financial service. The current local operator label is not authentication.
+AWS deployment was requested after the local application was verified. Hosted access preparation includes a Cognito sign-in flow and Gateway-context operator enforcement, with separate hosted configuration. No AWS account has been selected or resources provisioned. Real Cognito/Gateway authorization, PostgreSQL, TLS, secret management, and deployment checks remain pending. The local operator label is not authentication. See [hosting preparation](docs/production-readiness.md) for the proposed architecture, access model, and remaining prerequisites.
 
 See [architecture](docs/architecture.md) and [known limitations](docs/limitations.md).
 

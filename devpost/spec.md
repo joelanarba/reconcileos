@@ -383,6 +383,8 @@ These are proof-of-concept controls, not a claim of production security, strong 
 
 ## PostgreSQL and AWS Readiness
 
+Subsequent user request, October 24, 2026: prepare terminal-based AWS deployment and provision PostgreSQL after the completed local workflow. Preserve the existing local installation. Add a hosted Cognito authorization-code/PKCE frontend and trust only configured API Gateway JWT context in the backend, with operator-group authorization and authenticated audit actors. Hosted configuration requires verified PostgreSQL TLS and explicit hosts/origins. Follow docs/production-readiness.md for the proposed infrastructure and actual verification status. Account/profile, region, spending budget, and fresh-data or transfer selection remain required before provisioning. No deployment or PostgreSQL execution is claimed here.
+
 Use database-neutral SQLAlchemy expressions, String UUIDs, BigInteger money, named constraints, portable JSON, and shared UTC handling. Keep SQLite pragmas confined to the connection factory. Do not put SQLite-specific reconciliation queries in services. Alembic batch behavior addresses SQLite table alterations but does not establish PostgreSQL migration correctness.
 
 Prepare an opt-in PostgreSQL integration test path using a dedicated test DATABASE_URL. It must check migrations from an empty schema, foreign keys, uniqueness, import atomicity, snapshot behavior, concurrent review allocation, and report parity. Do not run it against an existing database without explicit authorization to use a dedicated disposable test schema or database. Report it as not run until a real PostgreSQL execution occurs.

@@ -31,12 +31,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             engine.dispose()
 
-    application = FastAPI(title="ReconcileOS", version="0.1.0", lifespan=lifespan)
+    application = FastAPI(title="ReconcileOS", version="0.1.0", lifespan=lifespan,
+                          docs_url="/docs" if configuration.app_mode == "local" else None,
+                          redoc_url="/redoc" if configuration.app_mode == "local" else None,
+                          openapi_url="/openapi.json" if configuration.app_mode == "local" else None)
     application.state.settings = configuration
     application.state.engine = engine
     application.state.sessions = session_factory(engine)
-    application.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "testserver"])
-    application.add_middleware(CORSMiddleware, allow_origins=configuration.cors_origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "X-Filename"], expose_headers=["Content-Disposition"])
+    application.add_middleware(TrustedHostMiddleware, allowed_hosts=configuration.allowed_hosts)
+    application.add_middleware(CORSMiddleware, allow_origins=configuration.cors_origins, allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type", "X-Filename"], expose_headers=["Content-Disposition"])
 
     @application.exception_handler(AppError)
     async def app_error(request: Request, error: AppError):
@@ -53,7 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(OperationalError)
     async def database_error(request: Request, error: OperationalError):
-        return JSONResponse({"detail": {"code": "database_unavailable", "message": "The local database is busy or unavailable. Try again."}}, status_code=503)
+        return JSONResponse({"detail": {"code": "database_unavailable", "message": "The database is busy or unavailable. Try again."}}, status_code=503)
 
     @application.exception_handler(Exception)
     async def unexpected_error(request: Request, error: Exception):
