@@ -46,7 +46,7 @@ After the browser services stopped, a separate Uvicorn process reopened the same
 
 ## Remaining Work
 
-The learner retried other files and confirmed the revised importer works, then confirmed reconciliation, case review, and report export also work. No further core-workflow change was requested. This is learner confirmation, separate from the recorded automated checks. AI validation is complete with controlled responses, but the live workspace still reports no configured provider or model. Provider connection, live AI verification, overall readiness, and the learning wrap-up remain open; another request to verify the same core screens is unnecessary.
+The learner retried other files and confirmed the revised importer works, then confirmed reconciliation, case review, and report export also work. No further core-workflow change was requested. This is learner confirmation, separate from the recorded automated checks. The learner selected OpenAI, and its endpoint/model/structured-output preset is prepared. API credentials must be added to the ignored local environment before an actual request can be verified. Live AI verification, overall readiness, and the learning wrap-up remain open; another request to verify the same core screens is unnecessary.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.
 
@@ -67,3 +67,7 @@ Executed on Windows with Python 3.14.3, Node.js 24.13.1, npm 11.8.0, and install
 AI tests use HTTPX controlled responses. They cover valid persistence, wrong-case and unsupported/duplicate IDs, extra fields, invalid confidence, context limits, untrusted prompt-like descriptions, missing configuration, provider errors, response size, invalid envelopes, redirects, request deadlines, and a concurrent case change. No live provider request was made. The independently runnable PostgreSQL verification script is prepared but unexecuted.
 
 The final reconciliation screen also exposes the backend's review-status filter explicitly. Its production build passed, and the complete Edge journey passed again with assertions for resolved/open filtering before continuing through review and export. That supplemental browser journey took 47.4 seconds; it is a repeat of the existing workflow, not an additional unique test counted above.
+
+## OpenAI Configuration Check
+
+After the learner selected OpenAI, the complete backend suite passed 131 tests with the same recorded TestClient deprecation warning. New checks cover the documented completion-limit parameter, strict output schema with allowed case/record IDs, disabled completion storage, credential/access errors, usage limits, refusals, incomplete choices, and actual API persistence safeguards through both compatible-provider and OpenAI controlled transports. The standalone synthetic verification command passed Python compilation and help/argument checks. Its live request has not run; the API key must be added locally first. A successful controlled response is not reported as an OpenAI model call.

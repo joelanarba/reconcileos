@@ -2,7 +2,7 @@
 
 This is a local proof of concept with automated checks and a pending final learner review. The approved remaining work is tracked in devpost/checklist.md.
 
-- All three source types, settlement matching, fee checks, and dashboard are implemented. Human review, notes, audit history, and CSV reports are implemented. Optional AI assistance is implemented and tested with controlled responses. No provider key or model is configured by default, and live-provider execution has not run.
+- All three source types, settlement matching, fee checks, and dashboard are implemented. Human review, notes, audit history, and CSV reports are implemented. Optional AI assistance is implemented and tested with controlled responses. OpenAI is selected with a prepared model preset; its API key must be supplied locally. Live-provider execution remains unverified.
 - The complete synthetic demonstration contains 100 orders, 100 payment rows, and 90 settlement rows. Its scenario-defined manifest is tested independently through the actual API.
 - One local workspace and an operator label are supported. The label is not authentication, and the API must not be exposed publicly as a financial-data service.
 - Imports accept CSV, TSV, XLSX, XLS, and XLSM with automatic recognition and editable column mapping. Files are bounded at 10 MiB and 10,000 transaction rows, with additional worksheet, column, cell, and expanded-workbook limits. UTF-8, BOM-marked UTF-16, and Windows-1252 text are supported.

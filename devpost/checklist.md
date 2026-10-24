@@ -70,7 +70,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
 - [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
 
-The learner confirmed imports with other files, then confirmed that reconciliation, investigation actions, and report export all work. No additional core-workflow change was requested, and another core verification request is unnecessary. The learner's remaining question concerns the AI integration. Live workspace availability was checked and reports no configured provider, model, or key. The implemented adapter has controlled-response tests but no live-provider verification. Provider selection has been requested so this outstanding integration step can be completed before overall readiness is closed.
+The learner confirmed imports with other files, then confirmed that reconciliation, investigation actions, and report export all work. No additional core-workflow change was requested, and another core verification request is unnecessary. The learner then selected OpenAI for investigation assistance. The endpoint, pinned GPT-5.4 Mini snapshot, strict JSON format, supported completion-limit parameter, and safe provider-error handling are prepared. The local key is not distributed with the repository. The learner was asked to add it locally before one synthetic-only live verification request. Controlled adapter tests pass; live-provider verification and overall readiness remain open until that request is actually run.
 
 ## Code Tour and App Map
 

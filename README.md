@@ -2,7 +2,7 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-This local proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI investigation assistance is implemented through a server-configured JSON adapter. Live-provider execution remains unverified because no provider credentials have been configured.
+This local proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI investigation assistance is implemented through a server-configured JSON adapter. OpenAI is selected for the optional assistant; live-provider execution remains unverified pending local credentials and a real request.
 
 ## Current Workflow
 
@@ -96,7 +96,11 @@ Backend tests use actual Alembic migrations on isolated temporary SQLite databas
 
 ## AI Boundaries
 
-AI assistance is optional and currently unconfigured. No default API key, paid account, or model is bundled. The server supports a configurable chat-completion JSON contract through LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_TIMEOUT_SECONDS, and LLM_RESPONSE_FORMAT in backend/.env. The base URL excludes /chat/completions, which the adapter appends. Select a provider/model that explicitly supports the documented contract, then verify it with synthetic evidence. Keep keys out of frontend files and Git. Restart the backend after changing settings.\n\nThe operator must explicitly consent before sending a selected case's evidence. The adapter sends at most 20 relevant records and 16 KiB, treats source text as untrusted, and validates the case, schema, and every returned supporting record ID. Only a validated hypothesis is saved. Provider failures preserve manual work and deterministic results. AI cannot create transactions, change amounts, approve matches, resolve cases, or determine financial truth.\n\nControlled HTTP-response tests passed. No live-provider request has run, so provider compatibility and model quality have not been established. See [AI configuration](docs/ai-configuration.md).
+OpenAI is the selected investigation provider. The prepared backend configuration uses https://api.openai.com/v1, the pinned gpt-5.4-mini-2026-03-17 model, and strict JSON schema output. The API key must be added locally to LLM_API_KEY in the ignored backend/.env file; no credential is bundled or exposed to the frontend. Restart the backend after changing settings. Provider/model selection does not establish live availability.
+
+The operator explicitly consents before sending a selected case's evidence. The adapter sends at most 20 relevant records and 16 KiB, treats source text as untrusted, and validates the case, schema, and every returned supporting record ID. Only a validated hypothesis is saved. Provider failures preserve manual work and deterministic results. AI cannot create transactions, change amounts, approve matches, resolve cases, or determine financial truth.
+
+Controlled HTTP tests pass for the generic and OpenAI request paths. Live-provider execution remains unverified until a real API key is added and the synthetic verification command succeeds. From backend, run .\.venv\Scripts\python.exe verify_ai.py --confirm-synthetic-request to authorize one bounded request using a separate synthetic database. See [AI configuration](docs/ai-configuration.md) for setup, safeguards, primary documentation, and actual verification status.
 
 ## Architecture and Database Portability
 

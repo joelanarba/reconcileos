@@ -78,6 +78,62 @@ def test_controlled_valid_response_and_bearer_key_stays_server_side():
     assert "synthetic-test-credential" not in json.dumps(availability(settings))
 
 
+def openai_settings():
+    return configured().model_copy(update={"llm_base_url": "https://api.openai.com/v1", "llm_model": "gpt-5.4-mini-2026-03-17", "llm_response_format": "json_schema"})
+
+
+def test_openai_selection_is_visible_without_claiming_an_available_key():
+    settings = openai_settings().model_copy(update={"llm_api_key": None})
+    state = availability(settings)
+    assert state["available"] is False and state["provider"] == "api.openai.com"
+    assert state["model"] == "gpt-5.4-mini-2026-03-17"
+    assert "LLM_API_KEY" in state["message"]
+
+
+def test_openai_request_has_supported_token_limit_and_bounded_strict_schema():
+    settings = openai_settings()
+    context = {"discrepancy_id": "case-1", "allowed_record_ids": ["payment:p1"], "untrusted_records": []}
+
+    def handler(request):
+        assert str(request.url) == "https://api.openai.com/v1/chat/completions"
+        payload = json.loads(request.content)
+        assert payload["max_completion_tokens"] == 1800 and "max_tokens" not in payload
+        assert payload["store"] is False and "tools" not in payload
+        assert payload["model"] == "gpt-5.4-mini-2026-03-17"
+        assert payload["response_format"]["type"] == "json_schema"
+        structured = payload["response_format"]["json_schema"]
+        assert structured["strict"] is True
+        schema = structured["schema"]
+        assert schema["additionalProperties"] is False
+        assert set(schema["required"]) == set(schema["properties"])
+        assert schema["properties"]["discrepancy_id"]["enum"] == ["case-1"]
+        assert schema["properties"]["supporting_record_ids"]["items"]["enum"] == ["payment:p1"]
+        assert "synthetic-test-credential" not in json.dumps(payload)
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(explanation()), "refusal": None}}]})
+
+    result = asyncio.run(ask_provider(settings, provider_configuration(settings), context, httpx.MockTransport(handler)))
+    assert result.discrepancy_id == "case-1"
+
+
+@pytest.mark.parametrize("status,code", [(401, "ai_credentials_rejected"), (403, "ai_credentials_rejected"), (429, "ai_usage_limit")])
+def test_openai_access_and_usage_errors_are_actionable_without_secret_disclosure(status, code):
+    settings = openai_settings()
+    transport = httpx.MockTransport(lambda request: httpx.Response(status, text="synthetic-test-credential private provider detail"))
+    with pytest.raises(AppError) as caught:
+        asyncio.run(ask_provider(settings, provider_configuration(settings), {"discrepancy_id": "case-1", "allowed_record_ids": ["payment:p1"]}, transport))
+    assert caught.value.code == code
+    assert "synthetic-test-credential" not in caught.value.message and "private provider detail" not in caught.value.message
+
+
+@pytest.mark.parametrize("finish,refusal,code", [("length", None, "ai_incomplete_response"), ("tool_calls", None, "ai_incomplete_response"), ("stop", "Declined", "ai_refused")])
+def test_refused_or_incomplete_content_cannot_be_accepted_as_a_valid_investigation(finish, refusal, code):
+    settings = openai_settings()
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json={"choices": [{"finish_reason": finish, "message": {"content": json.dumps(explanation()), "refusal": refusal}}]}))
+    with pytest.raises(AppError) as caught:
+        asyncio.run(ask_provider(settings, provider_configuration(settings), {"discrepancy_id": "case-1", "allowed_record_ids": ["payment:p1"]}, transport))
+    assert caught.value.code == code
+
+
 @pytest.mark.parametrize("failure", ["timeout", "http", "oversize", "malformed", "redirect"])
 def test_provider_failures_are_safe(failure):
     settings = configured()
@@ -111,16 +167,22 @@ def test_overall_request_deadline_is_enforced():
 
 
 @pytest.mark.parametrize("invalid,race", [(False, False), (True, False), (False, True)])
-def test_ai_endpoint_persists_only_valid_current_evidence(client, monkeypatch, invalid, race):
+@pytest.mark.parametrize("provider", ["compatible", "openai"])
+def test_ai_endpoint_persists_only_valid_current_evidence(client, monkeypatch, invalid, race, provider):
     import app.services.investigations.ai as service
 
     run, case, pair = prepared_case(client)
-    for name in ("llm_base_url", "llm_api_key", "llm_model"):
-        setattr(client.app.state.settings, name, getattr(configured(), name))
+    settings = openai_settings() if provider == "openai" else configured()
+    for name in ("llm_base_url", "llm_api_key", "llm_model", "llm_response_format"):
+        setattr(client.app.state.settings, name, getattr(settings, name))
     original_ask = service.ask_provider
 
     def handler(request):
-        context = json.loads(json.loads(request.content)["messages"][1]["content"])
+        payload = json.loads(request.content)
+        context = json.loads(payload["messages"][1]["content"])
+        if provider == "openai":
+            assert "max_completion_tokens" in payload and "max_tokens" not in payload
+            assert payload["response_format"]["json_schema"]["schema"]["properties"]["discrepancy_id"]["enum"] == [case["id"]]
         if race:
             with client.app.state.sessions() as session:
                 review_case(session, case["id"], ReviewRequest(action="note", expected_version=1, reason="Concurrent operator note"), "Another local operator")
@@ -138,6 +200,6 @@ def test_ai_endpoint_persists_only_valid_current_evidence(client, monkeypatch, i
         assert len(saved) == (0 if invalid or race else 1)
         if saved:
             assert saved[0].evidence["supporting_record_ids"]
-            assert saved[0].ai_metadata["provider"] == "synthetic-provider.invalid"
+            assert saved[0].ai_metadata["provider"] == ("api.openai.com" if provider == "openai" else "synthetic-provider.invalid")
     assert client.get(f"/api/runs/{run['id']}").json()["current_summary"] == run["original_summary"]
     assert "synthetic-test-credential" not in response.text

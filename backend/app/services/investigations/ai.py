@@ -44,6 +44,9 @@ def availability(settings):
         config = provider_configuration(settings)
         return {"available": True, "provider": config["hostname"], "model": config["model"], "message": "Configured; live availability is checked only when requested."}
     except AppError as error:
+        if error.code == "ai_not_configured" and (settings.llm_base_url or "").rstrip("/") == "https://api.openai.com/v1" and settings.llm_model:
+            return {"available": False, "provider": "api.openai.com", "model": settings.llm_model,
+                    "message": "OpenAI is selected. Add LLM_API_KEY to the backend's local .env file and restart the backend to enable investigation assistance."}
         return {"available": False, "provider": None, "model": None, "message": error.message}
 
 
@@ -82,12 +85,24 @@ def validate_explanation(content, case_id, allowed_ids):
 
 async def ask_provider(settings, configuration, context, transport=None):
     schema = AIExplanation.model_json_schema()
+    if context.get("discrepancy_id") and context.get("allowed_record_ids"):
+        schema["properties"]["discrepancy_id"]["enum"] = [context["discrepancy_id"]]
+        schema["properties"]["supporting_record_ids"]["items"]["enum"] = context["allowed_record_ids"]
     response_format = {"type": "json_object"} if settings.llm_response_format == "json_object" else {"type": "json_schema", "json_schema": {"name": "investigation_explanation", "strict": True, "schema": schema}}
-    payload = {"model": configuration["model"], "messages": [{"role": "system", "content": SYSTEM + "\nOutput schema: " + json.dumps(schema)}, {"role": "user", "content": json.dumps(context, ensure_ascii=False)}], "response_format": response_format, "max_tokens": 1800}
+    payload = {"model": configuration["model"], "messages": [{"role": "system", "content": SYSTEM + "\nOutput schema: " + json.dumps(schema)}, {"role": "user", "content": json.dumps(context, ensure_ascii=False)}], "response_format": response_format}
+    is_openai = configuration["hostname"] == "api.openai.com"
+    if is_openai:
+        payload.update(max_completion_tokens=1800, store=False)
+    else:
+        payload["max_tokens"] = 1800
     try:
         async with asyncio.timeout(settings.llm_timeout_seconds):
             async with httpx.AsyncClient(transport=transport, timeout=httpx.Timeout(settings.llm_timeout_seconds, connect=5), follow_redirects=False, trust_env=False) as client:
                 async with client.stream("POST", configuration["url"], headers={"Authorization": "Bearer " + configuration["secret"], "Accept-Encoding": "identity"}, json=payload) as response:
+                    if is_openai and response.status_code in (401, 403):
+                        raise AppError("ai_credentials_rejected", "OpenAI rejected the API credentials or access. Check the backend key, project permissions, and model access. Manual investigation remains available.", 503)
+                    if is_openai and response.status_code == 429:
+                        raise AppError("ai_usage_limit", "OpenAI reported a usage or rate limit. Check API usage and billing, then try later. Manual investigation remains available.", 503)
                     if response.status_code != 200:
                         raise AppError("ai_provider_unavailable", "The AI provider could not complete the request. Check server configuration or try later. Manual investigation remains available.", 503)
                     if response.headers.get("content-encoding", "identity").lower() != "identity":
@@ -98,7 +113,12 @@ async def ask_provider(settings, configuration, context, transport=None):
                         if len(body) > 65536:
                             raise AppError("invalid_ai_response", "The provider response exceeded the supported size. No investigation was saved.", 502)
                     envelope = json.loads(body, object_pairs_hook=unique_keys)
-                    content = envelope["choices"][0]["message"]["content"]
+                    choice = envelope["choices"][0]
+                    if choice["message"].get("refusal"):
+                        raise AppError("ai_refused", "The AI provider declined to explain this evidence. No investigation was saved. Continue manual review.", 502)
+                    if choice.get("finish_reason") not in (None, "stop"):
+                        raise AppError("ai_incomplete_response", "The AI provider did not return a complete explanation. No investigation was saved. Continue manual review or try again.", 502)
+                    content = choice["message"]["content"]
         return validate_explanation(content, context["discrepancy_id"], set(context["allowed_record_ids"]))
     except (TimeoutError, httpx.TimeoutException):
         raise AppError("ai_timeout", "AI assistance timed out. The case and deterministic results are unchanged. Continue manual review or try later.", 504) from None

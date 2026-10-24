@@ -1,12 +1,29 @@
 # Optional AI Investigation
 
-No provider, account, API key, or model is selected by default. No live AI request was executed during this build. The tests inject controlled HTTP responses and establish adapter behavior, evidence validation, and failure handling, not model quality or provider availability.
+OpenAI is the selected provider. The prepared configuration uses https://api.openai.com/v1 with gpt-5.4-mini-2026-03-17 and json_schema output. No API key is distributed with the repository. A live request has not been verified at this milestone. Controlled HTTP tests establish adapter behavior, evidence validation, and failure handling, not model quality or account access.
+
+## OpenAI Setup
+
+The selected snapshot supports Chat Completions and Structured Outputs according to the [official model documentation](https://developers.openai.com/api/docs/models/gpt-5.4-mini). The adapter uses the documented max_completion_tokens parameter and requests store=false. The strict schema limits case and supporting-record IDs to the supplied evidence; backend validation also enforces all field bounds. See the [Chat Completions reference](https://developers.openai.com/api/reference/python/resources/chat/subresources/completions/methods/create) and [Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=chat).
+
+1. Create or select a key in your [OpenAI API project](https://platform.openai.com/api-keys).
+2. Add it after LLM_API_KEY= in the ignored backend/.env file. Keep it out of chat, source files, and frontend variables. Endpoint, model, and output-format settings are prepared there. The key remains empty until you add it locally.
+3. Restart the backend. Investigations shows the selected provider and enables Request AI assistance only when complete configuration is loaded. That indication is not evidence of a successful provider request.
+4. From backend, run the following only when you intend to authorize one bounded API request using synthetic records:
+
+```powershell
+.\.venv\Scripts\python.exe verify_ai.py --confirm-synthetic-request
+```
+
+The provider can charge for that request. The script creates a new ignored ai-check database, applies actual migrations, imports two entirely synthetic records through the API, starts reconciliation, requests one explanation, and verifies validated persistence plus unchanged financial summaries. It retains the isolated verification database for inspection and does not read or change the ordinary financial workspace. A failed request does not count as live verification. No automatic retry is made.
+
+OpenAI credential/access rejections, usage limits, refusals, and incomplete generations receive specific safe errors. No raw provider payload or key is returned to the browser. Other providers remain configurable through the generic adapter.
 
 ## Configure on the Backend
 
 Set LLM_BASE_URL, LLM_API_KEY, and LLM_MODEL in the ignored backend/.env file or the backend process environment. Use the chosen provider's documented HTTPS API base URL; the adapter appends /chat/completions. Embedded credentials, query strings, fragments, redirects, and ordinary HTTP endpoints are rejected. LLM_ALLOW_LOOPBACK exists only for explicitly configured local test servers and defaults to false. Credentials must never use a VITE_ variable or be pasted into frontend code.
 
-Set LLM_RESPONSE_FORMAT to json_object or, only when the provider supports it, json_schema. The request contains model, messages, response_format, and max_tokens. The response must contain choices[0].message.content as a JSON string. Providers and models vary; confirm the chosen contract in primary provider documentation and perform a synthetic request before using real evidence. This project does not claim universal provider compatibility.
+Set LLM_RESPONSE_FORMAT to json_object or, only when the provider supports it, json_schema. The request contains model, messages, response_format, and a bounded completion limit. OpenAI uses max_completion_tokens; the compatible-provider path retains max_tokens. The response must contain choices[0].message.content as a JSON string. Refusals and explicitly incomplete choices are rejected. Providers and models vary; confirm another provider's contract in primary documentation and perform a synthetic request before using real evidence. This project does not claim universal provider compatibility.
 
 Restart the backend, open a case under Investigations, check the displayed provider/model, review the disclosure, and explicitly select the evidence-consent checkbox. A configuration indication does not prove the provider is currently reachable. The API key is never returned to the browser. Failed requests return a safe message without provider payloads or secrets.
 
