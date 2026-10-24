@@ -65,3 +65,5 @@ Executed on Windows with Python 3.14.3, Node.js 24.13.1, npm 11.8.0, and install
 - Source guide: source anchors were checked, the standalone HTML rendered with JavaScript disabled, and the screenshot was inspected. No completed learner tour is implied.
 
 AI tests use HTTPX controlled responses. They cover valid persistence, wrong-case and unsupported/duplicate IDs, extra fields, invalid confidence, context limits, untrusted prompt-like descriptions, missing configuration, provider errors, response size, invalid envelopes, redirects, request deadlines, and a concurrent case change. No live provider request was made. The independently runnable PostgreSQL verification script is prepared but unexecuted.
+
+The final reconciliation screen also exposes the backend's review-status filter explicitly. Its production build passed, and the complete Edge journey passed again with assertions for resolved/open filtering before continuing through review and export. That supplemental browser journey took 47.4 seconds; it is a repeat of the existing workflow, not an additional unique test counted above.

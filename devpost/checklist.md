@@ -49,7 +49,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
   Mechanical verification: 97 backend tests, 10 frontend tests, and the production build passed. The extended Edge journey performed notes, supported approval, resolve/reopen, explicit reversal, reload, and exact CSV download. A new Uvicorn process then reopened the isolated browser database and verified five audit actions, case version 6, the note, released manual allocations, and original/current monetary totals. Screenshots were inspected. Original automatic results remain unchanged. Commit a190578 records the verified milestone with the learner's author and committer identity.
 
-- [ ] **4. Add bounded AI assistance and verify the complete local proof of concept**
+- [x] **4. Add bounded AI assistance and verify the complete local proof of concept**
   Becomes usable: Optional configured AI assistance returns validated evidence-linked hypotheses, failures leave manual work available, and the full local application has executed verification, accurate documentation, and a reproducible demonstration path.
   Why now: AI can assist an already complete financial workflow without becoming a dependency of reconciliation. Final checks now cover the actual integrated implementation and its documented boundaries.
   PRD ref: `prd.md > AI Investigation Assistance`; `prd.md > Synthetic Demonstration and Verification`; `prd.md > Look and Feel`; `prd.md > What We're Building`; `prd.md > Deferred From the POC`.
@@ -59,7 +59,7 @@ Commands referring to backend tests run from backend using its virtual environme
   Learner check: Start the application with the README's Windows commands and explore all five screens, import the synthetic files, reconcile, inspect and review a case, export a report, and try AI availability or failure behavior. Report broken, confusing, or missing behavior so it can be resolved before readiness is confirmed. This is the planned final kick-the-tires checkpoint.
   Commit: `feat: add investigation assistance and verify local workflow`
 
-  Mechanical verification: the final Windows runs passed 120 backend tests, 12 frontend tests, the production build, pip check, and 4 real Edge checks. The browser covered the full CSV/Excel-to-reconciliation-to-review-to-export journey and the offline reference guide. The independent synthetic oracle passed. Controlled AI tests validated evidence, bounded requests, safe failure, and concurrent case changes; no live-provider request ran. An actual new Uvicorn process verified review persistence. The ordinary local backend was also restarted after a stale process was discovered; its API now exposes all three sources and the dashboard with AI correctly unconfigured. PostgreSQL and AWS checks remain unexecuted. The implementation checkpoint follows these checks; learner final review is still separate.
+  Mechanical verification: the final Windows runs passed 120 backend tests, 12 frontend tests, the production build, pip check, and 4 real Edge checks. The browser covered the full CSV/Excel-to-reconciliation-to-review-to-export journey and the offline reference guide. The independent synthetic oracle passed. Controlled AI tests validated evidence, bounded requests, safe failure, and concurrent case changes; no live-provider request ran. An actual new Uvicorn process verified review persistence. The ordinary local backend was also restarted after a stale process was discovered; its API now exposes all three sources and the dashboard with AI correctly unconfigured. PostgreSQL and AWS checks remain unexecuted. Commit db84c2b records the verified implementation under the learner's author and committer identity. A final explicit review-status filter was subsequently checked by the production build and complete Edge journey. Learner final review is separate and remains pending.
 
 ## Hands-on Checkpoints
 
@@ -70,7 +70,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
 - [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
 
-Early import feedback is recorded above. Final learner review has not occurred yet. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
+Early import feedback is recorded above. Final learner review was requested after the ordinary backend restart and final checks; observations are pending. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
 
 ## Code Tour and App Map
 
