@@ -106,11 +106,11 @@ Implements `prd.md > Local Workspace and Record Integrity` and `prd.md > States 
 
 ### CSV Import Service
 
-Accept raw CSV bytes from the browser's selected File, with source_type in the URL and an encoded display filename in X-Filename. This avoids an unnecessary multipart dependency. Read request chunks with a 2 MiB file limit, stop at the limit even without Content-Length, and accept at most 10,000 rows. UTF-8 with an optional BOM is supported; invalid encoding, null bytes, malformed CSV, repeated header names, or missing required columns are errors.
+Accept raw CSV, TSV, XLSX, XLS, and XLSM bytes from the browser's selected File, with source_type in the URL and an encoded display filename in X-Filename. Read request chunks with a 10 MiB limit and accept at most 10,000 transaction rows. Recognize UTF-8, BOM-marked UTF-16, and Windows-1252 text, and detect comma, semicolon, tab, and pipe separators. Recognize common business headings and preambles; unfamiliar or duplicate headings require column selection rather than rewriting the file. Bound Excel expansion, worksheets, columns, and cells; use read-only readers with XML protection and no macro or external-link execution.
 
 Normalize the display filename by removing path components and control characters. Never use it as a filesystem path. Uploaded source content and parsed rows are stored in database JSON fields, not written to a user-selected path. Preserve original header values and extra columns as provenance. Restrict identifier and description lengths, bound validation feedback, and paginate preview rows while retaining all validation outcomes for the bounded file.
 
-Required template columns:
+Canonical fields and optional template columns. Existing source headings are mapped to these fields rather than required to use these names:
 
 | Source | Columns |
 | --- | --- |
@@ -118,11 +118,11 @@ Required template columns:
 | Payments | provider, transaction_ref, order_ref, amount, currency, paid_at, status; optional description |
 | Settlements | provider, settlement_ref, payment_ref, gross_amount, fee_amount, net_amount, currency, settled_at; optional description |
 
-Order status accepts open, completed, and cancelled; cancelled orders stay visible and are excluded from automatic allocation. Payment status accepts successful, pending, failed, and reversed. Only successful is eligible. Provider identifiers are MTN_MOMO, TELECEL_CASH, BANK_TRANSFER, and PAYMENT_GATEWAY. These are supported CSV labels, not live integrations. Trim identifiers, normalize enum-like provider/status/currency fields explicitly, and preserve original values. References remain case-sensitive.
+Order status accepts open, completed, and cancelled; cancelled orders stay visible and are excluded from automatic allocation. Payment status accepts successful, pending, failed, and reversed. Common source synonyms are recognized, but unfamiliar payment statuses require an explicit operator classification and are never assumed successful. Normalize known provider aliases, preserving distinct other named providers rather than rejecting them or merging all gateways. Provider labels do not establish live integrations. References remain case-sensitive. Preserve original values and every interpretation choice.
 
-Dates must be ISO 8601 with an explicit timezone and are normalized to UTC. Amount fields use the Money Rules below. Orders, payments, and settlement gross amounts must be positive; fees and net amounts may be zero. A numerically valid but inconsistent gross/fee/net equation is retained with a warning so reconciliation can investigate it. Missing optional relationship references are valid evidence gaps.
+Read common date formats and native Excel dates using a visible date-order and timezone setting. Normalize the interpreted date to UTC. Missing dates require a mapped field or an explicit statement date; ambiguous local times are not guessed. Amount fields use exact normalization and the Money Rules below. Orders, payments, and settlement gross amounts must be positive; fees and net amounts may be zero. A numerically valid but inconsistent gross/fee/net equation is retained with a warning so reconciliation can investigate it. Missing optional relationship references are valid evidence gaps.
 
-The same row appearing twice is a warning, with row hashes and provenance retained. No reference-only uniqueness constraint discards repeated notification evidence. ImportBatch has a unique workspace/source/SHA-256 checksum key. Re-uploading a confirmed batch returns its existing identity and status; reconfirmation returns a conflict or an explicitly idempotent existing result without duplicate records. A preview is immutable; only previewed batches with zero invalid rows can be confirmed.
+The same row appearing twice is a warning, with row hashes and provenance retained. No reference-only uniqueness constraint discards repeated notification evidence. ImportBatch has a unique workspace/source/SHA-256 checksum key. Re-uploading a confirmed batch returns its existing identity and status without duplicate records. Original source cells are immutable. Before confirmation, the operator may revise column mapping, defaults, locale interpretation, and reasoned corrections or exclusions. Store revision history, preserve excluded cells, and reject stale interpretation requests. Only selected rows with no remaining errors can be confirmed; all selected rows commit atomically. Confirmed records cannot be remapped.
 
 All financial inserts, confirmed status, row counts, workspace input revision, and import audit event commit atomically. Any failure rolls the transaction back. A concurrency conflict never leaves a partly confirmed batch.
 
@@ -130,7 +130,7 @@ Implements `prd.md > CSV Import and Validation`.
 
 ### Money Rules
 
-Use Python integers and SQLAlchemy BigInteger minor-unit columns for stored money. Decimal is used only when parsing decimal CSV text; core matching, fee calculation, totals, and comparisons use integers. Accept ordinary non-negative decimal notation only, without exponents, grouping separators, currency symbols, NaN, infinity, or implicit rounding. Reject more fractional digits than the supported currency permits, even when the extra digits are zero. Limit each amount to 1,000,000,000,000 minor units.
+Use Python integers and SQLAlchemy BigInteger minor-unit columns for stored money. Convert supported spreadsheet numeric cells to decimal text at the reading boundary; core financial calculations never use those binary cell values. Normalize explicit currency prefixes, valid grouping separators, supported decimal formats, exact scientific notation, and non-significant trailing zeros without changing monetary value. True precision beyond the currency unit remains an error. An ambiguous separator requires the operator to choose a format. Reject NaN, infinity, invalid or negative incoming amounts, unsupported currency, and implicit rounding. Limit each amount to 1,000,000,000,000 minor units.
 
 The initial explicit precision table is GHS=2, USD=2, EUR=2, GBP=2, JPY=0, and KWD=3. Unsupported codes are rejected. The workspace base currency is GHS; that does not convert other currencies or permit them to be combined.
 
@@ -264,7 +264,8 @@ All application endpoints are under /api. Errors use a safe structured detail wi
 | GET /health | Database/schema readiness and application mode. |
 | GET /workspace | Local workspace, operator label, input revision, supported currencies/providers, safe fee-rule availability, and ai_available flag. |
 | GET /templates/{source_type} | Downloadable CSV template. |
-| POST /imports/preview?source_type=... | Bounded raw CSV bytes and X-Filename; returns batch identity, status, row counts, preview, warnings, and errors. |
+| POST /imports/preview?source_type=... | Bounded source file bytes and X-Filename; returns batch identity, detected format, column mapping, interpretation settings, row counts, original/parsed values, and attention items. |
+| POST /imports/{id}/mapping | Versioned mapping, defaults, format settings, and reasoned corrections/exclusions; rebuilds only an unconfirmed preview while preserving original cells and interpretation history. |
 | GET /imports | Paginated batch history. |
 | GET /imports/{id} | Paginated preview and provenance information for the selected batch. |
 | POST /imports/{id}/confirm | Confirms a valid preview atomically or returns an existing result/conflict without duplicating records. |
@@ -416,7 +417,7 @@ After the working slices, verify Windows startup commands, run backend and front
 
 - One local workspace and a labeled operator keep the workflow focused without fake authentication.
 - Synchronous bounded reconciliation and AI requests avoid worker infrastructure for this dataset scale; no throughput claim follows from that choice.
-- Raw CSV uploads with fixed templates avoid provider integration and multipart complexity while preserving real ingestion.
+- Raw CSV and Excel uploads with automatic recognition and adjustable mapping avoid provider integration and multipart complexity while preserving real ingestion. Templates are optional.
 - Conservative duplicate blocking and unresolved partial payments protect correctness before advanced allocation exists.
 - A small precision table and explicit synthetic fee file avoid unsupported currency or provider assumptions.
 - A generic bounded JSON adapter keeps provider-specific code out of the financial engine; actual provider support still requires verification.

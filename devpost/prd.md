@@ -13,8 +13,8 @@ Source: `scope.md > Who It's For`, `scope.md > The Unique Kernel`, and `scope.md
 
 1. Open the application in local single-workspace mode. On first use, see an empty dashboard and a clear route to Imports.
 2. Download the three CSV templates or use the clearly labeled synthetic demonstration files.
-3. Select an import type, upload a file, and inspect its columns, parsed rows, validation errors, duplicate warnings, and totals.
-4. Confirm a valid import. See the persisted result in import history. A file with validation errors cannot be confirmed.
+3. Select an import type, upload an existing CSV or Excel export, and inspect automatically recognized columns, interpreted rows, attention items, duplicate warnings, and totals. Adjust column mapping or correct a source interpretation in the preview when needed.
+4. Confirm the selected valid records. See the persisted result in import history. Unresolved financial interpretation errors block confirmation; explicit, reasoned row exclusions are preserved and never silently dropped.
 5. Repeat for the other sources, then start a reconciliation run. Orders and payments are sufficient to run; absent settlement records produce missing-evidence cases rather than a claim of failed settlement.
 6. Inspect the run's recorded inputs, calculated summary, matches, and discrepancies. Search references and filter results without losing the selected run.
 7. Open a discrepancy and inspect the exact records, source rows, rule explanation, and current review status.
@@ -75,18 +75,18 @@ Source: `scope.md > The Unique Kernel` and `scope.md > The POC Boundary`.
 
 ### CSV Import and Validation
 
-Support orders, payments, and settlements as separate import types with downloadable templates and documented required columns.
+Support orders, payments, and settlements as separate import types. Existing CSV, TSV, XLSX, XLS, and XLSM exports are read without requiring template column names. Recognize common headings and provide a column-mapping form for unfamiliar or ambiguous columns. Templates remain optional.
 
 - Preview shows the parsed row count, valid and invalid counts, representative rows, and row-specific errors. It identifies duplicate rows without discarding evidence silently.
-- Validate identifiers, required columns, provider names, payment statuses, dates, currencies, numeric formats, and currency precision.
-- Reject malformed monetary values, unsupported currencies, missing identifiers, malformed dates, unsafe uploads, and files above the documented limit.
-- Confirmation is unavailable when validation errors exist. Warnings are distinguished from errors.
-- Confirmation commits the complete valid batch atomically. A failed confirmation leaves no partial financial records.
+- Validate the interpreted identifiers, payment statuses, dates, currencies, numeric formats, and currency precision. Accept common provider aliases and other named providers without falsely claiming a live integration.
+- Read common CSV encodings and separators, human-readable dates, and ordinary amount formatting. Show genuine missing or ambiguous financial values as attention items with mapping, correction, or explicit exclusion controls. Reject unsafe, unreadable, and oversized files. Preserve original cells and all interpretation choices.
+- Confirmation is unavailable while any selected row needs a financial interpretation. Warnings and harmless formatting normalization are distinguished from true errors. Source corrections and excluded rows require a documented reason; payment success is not guessed from unknown statuses.
+- Confirmation commits all selected validated records atomically. A failed confirmation leaves no partial financial records. Excluded source rows remain in batch provenance, with their reasons.
 - Re-uploading or reconfirming an already imported file for the same source and workspace does not create another set of financial records.
 - A different export containing repeated provider references preserves that evidence for reconciliation and review.
 - Import history shows source type, safe filename, status, row counts, timestamp, and a way to inspect its validation or provenance information.
 
-Acceptance: import one valid file of each type; reject a malformed amount and missing required column; show understandable errors; confirm that importing the same file twice leaves the financial record count unchanged.
+Acceptance: import ordinary CSV and Excel files; recognize common headings and map unfamiliar columns; correct a preview with an explicit reason while preserving original cells; reject silent rounding, guessed payment status, and unsafe files; confirm that importing the same file twice leaves financial record counts unchanged.
 
 Source: `scope.md > The Core Loop` steps 2-3 and `scope.md > The POC Boundary`.
 
@@ -227,7 +227,7 @@ Source: `scope.md > What "Working" Looks Like` and `scope.md > The POC Boundary`
 
 The learner selected the product identity, Ghanaian initial market, five screens, CSV-based workflow, deterministic engine, human review, optional AI assistance, local single-workspace mode, visual system, synthetic dataset scale, test expectations, and deadline.
 
-Approved interpretations in this PRD are strict whole-file validation before confirmation, zero automatic matching tolerance, no automatic partial-payment aggregation, documented duplicate eligibility, and explicit reversal of review-created allocations. These preserve the supplied correctness requirements.
+Approved interpretations in this PRD are validation of every selected row before atomic confirmation, zero automatic matching tolerance, no automatic partial-payment aggregation, documented duplicate eligibility, and explicit reversal of review-created allocations. The learner's first hands-on feedback authorized CSV/Excel recognition, column mapping, reasoned corrections, and explicit exclusions while preserving original cells. These preserve the supplied correctness requirements.
 
 ## What We're Building
 

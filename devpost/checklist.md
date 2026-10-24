@@ -1,0 +1,88 @@
+---
+doc: checklist
+status: approved
+---
+
+# ReconcileOS Build Checklist
+
+Build mode: fast. The learner approved the displayed build order and proposed fast mode by responding "prceed". Keep code discussion concise, with the early hands-on checkpoint and final review below.
+
+The scope, product requirements, and technical specification are approved. This checklist translates their core journey into working increments. Project setup belongs inside the first usable behavior, and the deterministic reconciliation kernel appears in that first slice. Every slice is mechanically verified and committed before the next begins. Fields below describe planned checks; they are not claims of completed execution.
+
+Commands referring to backend tests run from backend using its virtual environment's Python. Frontend commands run from frontend using npm.cmd. Browser checks use the actual running services and synthetic inputs. Record actual outcomes under each slice before marking it complete. Any unavailable check remains explicitly unexecuted.
+
+## Slices
+
+- [ ] **1. Import orders and payments and inspect a real reconciliation run**
+  Becomes usable: A running Windows application where the operator previews and confirms order and payment CSVs, starts reconciliation, and inspects stored exact matches and unresolved order-payment cases.
+  Why now: Proves the distinctive financial engine through the browser immediately, while exposing dependency, database, import, and persistence risks before the remaining workflow grows around them.
+  PRD ref: `prd.md > The Core Journey` steps 1-7; `prd.md > CSV Import and Validation`; `prd.md > Deterministic Reconciliation`; `prd.md > Local Workspace and Record Integrity`.
+  Spec ref: `spec.md > Configuration and Persistence`; `spec.md > CSV Import Service`; `spec.md > Money Rules`; `spec.md > Snapshot and Reconciliation Engine`; `spec.md > Data Model`; `spec.md > Frontend Routes and Data Access`; `spec.md > Look and Feel`.
+  Build: Bootstrap the backend and frontend inside this behavior. Install and record compatible dependencies; configure the local database, explicit CORS, shared money/time validation, upload limits, and safe errors; define the portable schema and initial Alembic migration. Implement order/payment preview, confirmation, templates, provenance, duplicate-file prevention, and import history. Implement and persist immutable run snapshots, exact order-payment matches, conservative duplicate blocking, missing/unmatched payments, reference and currency differences, partial payments, and ambiguity cases. Add the compact application shell, functional import interface, run action, results, explanations, and source evidence. Show only implemented actions and navigation. Add small independent fixtures and automated import, money, migration, and order-payment engine tests. Add factual setup instructions for the working slice.
+  Verify (mechanical): Create the virtual environment and install requirements using Python 3.14; execute Alembic upgrade against a fresh local SQLite database and verify its revision and foreign-key enforcement. Run backend tests for money, imports, order-payment matching, snapshot determinism, and rollback/idempotency. Run the frontend interaction tests and production build. Start both services, upload real small fixture files, confirm them, run reconciliation, inspect a match and an unresolved case, restart the backend, and verify persistence. Compare normalized output for repeated identical snapshots and confirm no double allocation or cross-currency match. Record actual commands, results, and any deviations.
+  Learner check: Open http://127.0.0.1:5173, import the supplied small order/payment fixtures, run reconciliation, and open one match and one unresolved case. Report anything confusing or inconsistent with the intended operational layout. This is the planned early hands-on checkpoint before continuing.
+  Commit: `feat: reconcile imported orders and payments`
+
+  Mechanical verification: dependency installation succeeded on Python 3.14.3 and Node.js 24.13.1. Alembic initialized the ordinary local database and fresh isolated test databases; schema parity and actual foreign-key enforcement passed. Initial checks passed 52 backend tests, 6 frontend tests, and one real browser workflow. After actual learner feedback, the importer was revised for CSV/Excel recognition, mapping, and preview review. Revised verification passed 68 backend tests, 8 frontend tests, the production build, pip check, and 3 real Edge browser tests. Original financial fixture results remained unchanged. Screenshots were inspected. The Starlette HTTPX deprecation warning remains recorded. Learner feedback was received; the source milestone commit is next.
+
+- [ ] **2. Reconcile settlement evidence and inspect complete financial summaries**
+  Becomes usable: The operator imports all three sources and sees exact settlement relationships, configured fee checks, missing settlement evidence, complete run summaries, a useful dashboard, and filterable evidence-backed results.
+  Why now: Extends the already working kernel to the third financial source and proves the full accounting interpretation before human decisions can change review state.
+  PRD ref: `prd.md > CSV Import and Validation`; `prd.md > Deterministic Reconciliation`; `prd.md > Discrepancy Detection and Evidence`; `prd.md > Dashboard and Monetary Summaries`; `prd.md > Synthetic Demonstration and Verification`.
+  Spec ref: `spec.md > CSV Import Service`; `spec.md > Money Rules`; `spec.md > Snapshot and Reconciliation Engine`; `spec.md > Summary and Valuation Service`; `spec.md > API Contracts`; `spec.md > Verification Strategy`.
+  Build: Add settlement templates, validation, confirmation, and provenance to the real import workflow. Implement payment-settlement candidates, gross/fee/net validation, synthetic configured fee rules, missing-rule cases, ambiguous settlement evidence, and unmatched settlement review. Complete run summaries with explicit duplicate exclusions and per-currency valuation of connected unresolved records. Add the dashboard, run selection, search, filters, case list, and source-record drill-down. Generate approximately 100 synthetic orders, 100 payments, and 80 to 100 settlements with an independently specified expected-results manifest and documented fictional scenarios. Preserve original automatic summaries separately from mutable review summaries.
+  Verify (mechanical): Run settlement import and engine tests for exact identity, missing evidence, fee calculation, fee-rule absence, gross/net inconsistencies, duplicate groups, and ambiguous candidates. Run independent summary tests for overlapping cases, duplicate exclusions, supported currency precision, and zero implicit currency conversion. Import the full synthetic files through the actual API, reconcile them, and compare exact relationships, case counts, and monetary values with the manifest. Run all existing backend tests, affected frontend tests, and the frontend production build. Check dashboard and filtered result values against API responses in the running browser.
+  Learner check: Import the synthetic settlement file, run reconciliation, inspect a clean settlement match and a fee or missing-evidence case, and verify that the labels distinguish absent records from a proven settlement failure. This can be tried without adding another mandatory pause before the planned final review.
+  Commit: `feat: reconcile settlement evidence and summaries`
+
+- [ ] **3. Investigate discrepancies, persist decisions, and export reports**
+  Becomes usable: A finance officer can inspect cases, add notes, approve or reject supported proposals, resolve and reopen cases, explicitly reverse a manual allocation, inspect audit history, and download consistent CSV reports.
+  Why now: Builds review and reporting on already verified automatic results, making the core operational loop complete before optional AI assistance is added.
+  PRD ref: `prd.md > Human Review, Notes, and Audit History`; `prd.md > Reports and Export`; `prd.md > Dashboard and Monetary Summaries`; `prd.md > States and Boundaries`.
+  Spec ref: `spec.md > Human Review and Audit Service`; `spec.md > Summary and Valuation Service`; `spec.md > Reports and CSV Export`; `spec.md > Data Model`; `spec.md > API Contracts`; `spec.md > Frontend Routes and Data Access`.
+  Build: Implement validated review transitions, reasons, local actor labels, version conflicts, proposal evidence membership, logical payment allocation uniqueness, explicit manual reversal, append-only notes/decisions, and atomic audit creation. Build case detail actions with current state and chronological audit history. Derive current accepted and unresolved values without rewriting original run decisions. Add the Reports screen, metric definitions, summary and discrepancy CSV routes, and formula-neutralized exports. Complete all five operational navigation destinations with working controls and useful empty/error states.
+  Verify (mechanical): Run review/audit API tests for valid and invalid transitions, stale versions, unsupported candidate IDs, currency/amount/status invariants, duplicate allocation conflicts, explicit reversal, atomic rollback, and append-only audit guards. Resolve and reopen a case and compare current summaries with the preserved original summary. Parse exported CSVs and compare counts, exact amounts, currency labels, and source identities with report data; test formula-like, quoted, and multiline text. Run the full backend suite, frontend review/report tests, and the production build. Use the running application to complete a manual decision, restart, verify history, and download a report.
+  Learner check: Open an unresolved case, inspect its source rows, add a note, make an applicable documented review decision, resolve and reopen it, then export a report. Confirm the history explains what changed and who performed it. The final hands-on session will revisit this complete workflow after slice 4.
+  Commit: `feat: add discrepancy review and report exports`
+
+- [ ] **4. Add bounded AI assistance and verify the complete local proof of concept**
+  Becomes usable: Optional configured AI assistance returns validated evidence-linked hypotheses, failures leave manual work available, and the full local application has executed verification, accurate documentation, and a reproducible demonstration path.
+  Why now: AI can assist an already complete financial workflow without becoming a dependency of reconciliation. Final checks now cover the actual integrated implementation and its documented boundaries.
+  PRD ref: `prd.md > AI Investigation Assistance`; `prd.md > Synthetic Demonstration and Verification`; `prd.md > Look and Feel`; `prd.md > What We're Building`; `prd.md > Deferred From the POC`.
+  Spec ref: `spec.md > AI Investigation Adapter`; `spec.md > Security and Privacy`; `spec.md > Verification Strategy`; `spec.md > PostgreSQL and AWS Readiness`; `spec.md > Where It Runs and How Someone Tries It`; `spec.md > Important Failure Modes`.
+  Build: Implement the server-configured JSON adapter, bounded context, untrusted-description handling, strict referenced-evidence validation, safe errors, validated investigation persistence, and explicit evidence-disclosure action in the case interface. Write README, architecture, reconciliation rules, testing, limitations, demo operations, production-readiness, and submission-checklist documentation from actual behavior. Add the opt-in independent PostgreSQL test path without connecting to an unapproved server. Verify styling, accessibility of key controls, exact formatting, local-only configuration, tracked files, and identity metadata. Run the full real-service browser workflow with Playwright if practical; otherwise record what browser execution actually occurred. Prepare a technical two-minute demonstration sequence and factual submission evidence while preserving the learner's responsibility for human-written submission copy and narration under 6-ship.
+  Verify (mechanical): Run AI tests with controlled HTTP responses for valid output, unsupported IDs, wrong case, invalid structure, prompt-like source text, bounded payloads, missing configuration, provider errors, and timeout. Run the full backend suite, all frontend tests, and production build. Initialize a fresh SQLite database using documented migrations and repeat the complete CSV-to-review-to-export workflow against actual services. Compare synthetic results with the manifest, inspect the rendered interface, and verify persistence across restart. Scan new tracked project artifacts for secrets, restricted styling/text, ignored personal context, and unrelated files. Verify author and committer for each milestone. Execute a live-provider test only if credentials and provider configuration are supplied; otherwise mark it unexecuted. Mark PostgreSQL, deployment, and other unavailable checks explicitly unexecuted rather than passing.
+  Learner check: Start the application with the README's Windows commands and explore all five screens, import the synthetic files, reconcile, inspect and review a case, export a report, and try AI availability or failure behavior. Report broken, confusing, or missing behavior so it can be resolved before readiness is confirmed. This is the planned final kick-the-tires checkpoint.
+  Commit: `feat: add investigation assistance and verify local workflow`
+
+## Hands-on Checkpoints
+
+- [x] Early usable behavior explored: the learner tried importing files and reported rejection of ordinary exports, missing Excel support, strict source naming, and concern about the unfinished product. The authorized import revision was implemented and mechanically verified; the final learner review will retry the affected workflow. This records reported feedback, not an assertion that the learner has already retried the revision.
+- [ ] Final kick-the-tires exploration and feedback completed: after slice 4, the learner explores the complete core journey and relevant awkward inputs; agreed revisions are recorded and verified.
+
+## Final Review
+
+- [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
+
+No learner feedback or final-review execution has occurred yet. Add agreed revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
+
+## Code Tour and App Map
+
+- [ ] Learning activity complete: use one actual source action and its test, or a brief evidence-based recap if the learner prefers concise discussion.
+- [ ] Optional edit and transfer reflection addressed: offer once where useful and record the actual response or that the activity was declined/not applicable.
+- [ ] devpost/app-map.html generated from finished code, checked, and shown, including a project-grounded practice to reuse.
+
+Activity and evidence: pending the finished implementation and actual learner interaction. A useful reference route will trace import confirmation through the API, deterministic engine, and displayed evidence using real paths and symbols.
+Route and stops: pending actual source paths; planned file names are not presented as completed learning stops.
+Edit outcome: not performed.
+Reflection: not offered yet; any personal answer belongs in the ignored learner profile.
+Activity mode: pending; record a live walkthrough, explicit static fallback, focused alternative, prior practice, or recap accurately.
+
+The map is a standalone offline project guide, not an application screen or HTML build checklist. Generate it from finished code after agreed revisions. Keep scope, PRD, spec, checklist, and the safe map in the repository. The 6-ship handoff remains pending until the build, final review, and wrap-up are actually complete.
+
+## Revisions
+
+- Browser test startup uses quoted absolute Python executable paths because Windows cmd.exe rejected the original relative forward-slash executable path.
+- Browser verification waits for visible preview state and the newly selected completed run. This avoids relying on an Edge inspector response body and prevents a prior run's identical values from satisfying a new-run check prematurely.
+- Table scroll containers establish a positioning context so a visually hidden action heading cannot widen the mobile document beyond its viewport. The browser test now asserts the viewport boundary.
+- Actual learner feedback expanded the first slice to recognize common CSV and Excel exports, map business headings, and review source-preserving corrections or exclusions. The learner explicitly authorized this change; scope, PRD, and spec were revised. Templates are now optional, and genuine financial ambiguity still requires an explicit decision.

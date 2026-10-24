@@ -42,7 +42,7 @@ AI assistance works when a compatible provider is configured. Missing credential
 
 - React and TypeScript frontend with Dashboard, Imports, Reconciliation, Investigations, and Reports screens.
 - FastAPI modular monolith, SQLAlchemy models, Alembic migrations, and local SQLite persistence.
-- CSV templates, bounded uploads, previews, explicit validation errors, atomic confirmation, provenance, import history, and duplicate-file prevention.
+- CSV and Excel imports, automatic format and common-header recognition, adjustable column mapping, preview corrections and explicit row exclusions, optional templates, bounded uploads, atomic confirmation, provenance, import history, and duplicate-file prevention.
 - Deterministic order-to-payment and payment-to-settlement matching with exact currency-aware integer arithmetic and explicit configured fee rules.
 - Detection of duplicate notifications, missing payments, unmatched payments, missing settlement evidence, fee differences, incorrect references, ambiguous candidates, and partial payments.
 - Accurate metric definitions that avoid treating overlapping discrepancies as independent losses.
@@ -56,7 +56,7 @@ AI assistance works when a compatible provider is configured. Missing credential
 
 - PostgreSQL migration and integration testing against an independently provisioned database before claiming compatibility.
 - Authenticated AWS deployment after the local application is stable and deployment is explicitly requested.
-- Additional currencies, configurable import mappings, more advanced payment allocation, and multiple workspaces after the core workflow is proven.
+- Additional currencies, reusable provider mapping profiles, more advanced payment allocation, and multiple workspaces after the core workflow is proven.
 
 ## Explicitly Cut
 
@@ -70,3 +70,5 @@ AI assistance works when a compatible provider is configured. Missing credential
 ## Review
 
 This document distills the learner's supplied master brief. The learner approved the displayed scope by responding "proceed". The scope is broader than the curriculum's usual small experiment, so implementation must follow the supplied priority order and preserve the complete core workflow.
+
+The learner's first hands-on feedback explicitly requested ordinary CSV and Excel acceptance, flexible column names, and less import preparation. That instruction authorizes the import-format and mapping expansion above. Exact monetary validation and evidence preservation remain required.

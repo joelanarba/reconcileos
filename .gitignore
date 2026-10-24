@@ -2,6 +2,7 @@
 /.agents/
 /.claude/
 /agent/
+/backend/data/
 .env
 .env.*
 !.env.example
@@ -26,5 +27,6 @@ test-results/
 *.sqlite
 *.sqlite3
 *.log
+*.tsbuildinfo
 .DS_Store
 Thumbs.db

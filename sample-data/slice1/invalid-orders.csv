@@ -1,0 +1,2 @@
+order_ref,amount,currency,ordered_at,status,description
+SYN-INVALID-1,not-an-amount,GHS,2026-10-20T09:00:00Z,open,Synthetic invalid numeric value

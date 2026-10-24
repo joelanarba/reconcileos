@@ -1,0 +1,6 @@
+provider,transaction_ref,order_ref,amount,currency,paid_at,status,description
+MTN_MOMO,SYN-PAY-1001,SYN-ORD-1001,125.50,GHS,2026-10-20T09:02:00Z,successful,Synthetic exact payment
+TELECEL_CASH,SYN-PAY-1003,SYN-ORD-1003,30.00,GHS,2026-10-20T09:22:00Z,successful,Synthetic partial payment
+MTN_MOMO,SYN-PAY-1004,SYN-ORD-1004,95.00,GHS,2026-10-20T09:32:00Z,successful,Synthetic duplicate notification
+MTN_MOMO,SYN-PAY-1004,SYN-ORD-1004,95.00,GHS,2026-10-20T09:32:00Z,successful,Synthetic duplicate notification
+BANK_TRANSFER,SYN-PAY-1005,SYN-UNKNOWN-1,150.00,GHS,2026-10-20T09:40:00Z,successful,Synthetic unmatched incoming record

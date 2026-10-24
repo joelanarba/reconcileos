@@ -1,0 +1,61 @@
+import { expect, test } from '@playwright/test'
+import path from 'node:path'
+
+test('real CSV import, validation, reconciliation, filters, and source evidence', async ({ page }) => {
+  const browserErrors: string[] = []
+  page.on('pageerror', error => browserErrors.push(error.message))
+  await page.goto('/imports')
+  await expect(page.getByRole('heading', { name: 'Imports', exact: true })).toBeVisible()
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('link', { name: 'Download orders template' }).click()
+  expect((await downloadPromise).suggestedFilename()).toBe('orders-template.csv')
+  await page.getByLabel('Select a file').setInputFiles(path.resolve('../sample-data/slice1/invalid-orders.csv'))
+  await page.getByRole('button', { name: 'Preview file' }).click()
+  await expect(page.getByText('1 row needs attention before confirmation.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Confirm import' })).toBeDisabled()
+  for (const source of ['orders', 'payments']) {
+    await page.getByLabel('Record type').selectOption(source)
+    await page.getByLabel('Select a file').setInputFiles(path.resolve(`../sample-data/slice1/${source}.csv`))
+    await page.getByRole('button', { name: 'Preview file' }).click()
+    await expect(page.locator('.preview-panel').getByText(`${source}.csv`, { exact: true })).toBeVisible()
+    const confirmation = page.getByRole('button', { name: 'Confirm import' })
+    if (await confirmation.count()) await confirmation.click()
+    await expect(page.getByRole('button', { name: 'Imported', exact: true })).toBeVisible()
+  }
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Reconciliation' }).click()
+  await page.getByRole('button', { name: 'Start reconciliation' }).click()
+  await expect(page).toHaveURL(/\/reconciliation\?run=[a-f0-9-]+$/)
+  await expect(page.getByRole('button', { name: 'Start reconciliation', exact: true })).toBeEnabled()
+  await expect(page.getByText('GHS 125.50', { exact: true })).toBeVisible()
+  await expect(page.getByText('GHS 305.50', { exact: true })).toBeVisible()
+  await expect(page.getByText('GHS 385.00', { exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Review cases 6' })).toBeVisible()
+  await page.getByLabel('Discrepancy type').selectOption('partial_payment')
+  await expect(page.getByText('1 results', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'View evidence' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('dialog').locator('.source-identity').getByText('SYN-ORD-1003', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Close evidence' }).click()
+  await page.getByRole('tab', { name: 'Exact matches 1' }).click()
+  await page.getByRole('textbox', { name: 'Search references' }).fill('SYN-PAY-1001')
+  await expect(page.getByRole('cell', { name: 'SYN-PAY-1001', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'View evidence' }).click()
+  await page.screenshot({ path: 'test-results/evidence-desktop.png', fullPage: true })
+  await page.getByRole('button', { name: 'Close evidence' }).click()
+  await page.getByRole('tab', { name: 'Review cases 6' }).click()
+  await page.getByRole('textbox', { name: 'Search references' }).fill('')
+  await page.screenshot({ path: 'test-results/reconciliation-desktop.png', fullPage: true })
+  await page.reload()
+  await expect(page.getByText('GHS 125.50', { exact: true })).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('link', { name: 'Imports', exact: true }).click()
+  await expect(page.getByRole('link', { name: /Download .* template/ })).toBeVisible()
+  const narrowLayout = await page.evaluate(() => ({
+    viewport: innerWidth,
+    document: document.documentElement.scrollWidth,
+    overflowing: Array.from(document.querySelectorAll('*')).filter(element => element.getBoundingClientRect().right > innerWidth + 1).slice(0, 12).map(element => ({ tag: element.tagName, className: element.className, right: element.getBoundingClientRect().right })),
+  }))
+  expect(narrowLayout.document, JSON.stringify(narrowLayout.overflowing)).toBeLessThanOrEqual(narrowLayout.viewport)
+  await page.screenshot({ path: 'test-results/imports-mobile.png', fullPage: true })
+  expect(browserErrors).toEqual([])
+})

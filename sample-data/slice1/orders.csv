@@ -1,0 +1,5 @@
+order_ref,amount,currency,ordered_at,status,description
+SYN-ORD-1001,125.50,GHS,2026-10-20T09:00:00Z,completed,Synthetic stationery order
+SYN-ORD-1002,80.00,GHS,2026-10-20T09:10:00Z,open,Synthetic order without payment evidence
+SYN-ORD-1003,60.00,GHS,2026-10-20T09:20:00Z,open,Synthetic partial payment scenario
+SYN-ORD-1004,95.00,GHS,2026-10-20T09:30:00Z,completed,Synthetic repeated notification scenario
