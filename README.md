@@ -2,11 +2,11 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-Development is in progress. The first working slice supports order and payment CSV/Excel imports, automatic format recognition, column mapping, reasoned preview corrections, exact deterministic reconciliation, discrepancy detection, source evidence, and local persistence. Settlement reconciliation, case review actions, Reports, and AI assistance belong to the remaining approved build slices and are not presented as completed features.
+Development is in progress. The application supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Case review actions, report exports, and AI assistance are the remaining approved build work.
 
 ## Current Workflow
 
-1. Select Orders or Payment transactions and upload an existing CSV, TSV, XLSX, XLS, or XLSM export.
+1. Select Orders, Payment transactions, or Settlement records and upload an existing CSV, TSV, XLSX, XLS, or XLSM export.
 2. Review recognized headings and source rows. Adjust column mapping or date/number settings when needed. Correct or explicitly exclude problem rows in the preview with a reason; original cells remain unchanged.
 3. Confirm the selected validated records. All selected rows commit together or none do. Interpretation choices and exclusions remain in provenance.
 4. Start reconciliation against a stored input snapshot.
@@ -22,7 +22,7 @@ Repeated provider transaction references are retained and all members are exclud
 
 Money is stored in integer minor units. Decimal parsing rejects unsupported precision rather than rounding silently. The supported precision table is GHS, USD, EUR, and GBP at two digits, JPY at zero, and KWD at three. Monetary API values are integer strings, formatted with BigInt in the browser. Currencies are never combined or implicitly converted.
 
-Affected recorded value groups connected unresolved source evidence and values each group at one level per currency: orders first, otherwise distinct provider transaction keys, otherwise settlement evidence. It is not a financial-loss calculation. See [reconciliation rules](docs/reconciliation-rules.md) for the exact first-slice definitions.
+Affected recorded value groups connected unresolved source evidence and values each group at one level per currency: orders first, otherwise distinct provider transaction keys, otherwise settlement evidence. It is not a financial-loss calculation. See [reconciliation rules](docs/reconciliation-rules.md) for the implemented definitions.
 
 ## Run on Windows
 
@@ -60,11 +60,11 @@ DATABASE_URL defaults to sqlite:///./data/reconcileos.db, resolved relative to b
 
 The small files in [sample-data/slice1](sample-data/slice1/README.md) contain four fictional orders and five payment rows. Import orders.csv as Orders and payments.csv as Payment transactions, confirming each. Then start reconciliation.
 
-Expected first-slice results are one exact match, six unresolved cases, GHS 125.50 matched order value, GHS 305.50 eligible payment value, and GHS 385.00 affected recorded value. The extra notification count is one; both rows in that reference group are excluded from automatic allocation. The independent [manifest](sample-data/slice1/expected-results.json) records the expected counts, values, and exact relationship.
+With the complete engine and no settlement file, this small fixture produces one order match, nine unresolved cases, GHS 125.50 matched order value, GHS 305.50 eligible payment value, and GHS 510.50 affected recorded value. Three cases identify missing settlement evidence. The extra notification count is one; both rows in that reference group are excluded from automatic allocation. The independent [current manifest](sample-data/slice1/expected-results-complete.json) records the expected counts, values, and exact relationship.
 
 Use invalid-orders.csv to inspect a financial value needing attention. Review the row in the application rather than rewriting the file. Unresolved selected rows prevent confirmation. Re-importing an identical file or reconfirming its batch does not insert another set of records.
 
-These are synthetic records, not evidence of real receipts, completed settlements, or provider integrations. The larger three-source dataset is part of the next build slice.
+These are synthetic records, not evidence of real receipts, completed settlements, or provider integrations. For the complete three-source demonstration, use the three files in sample-data/demo in a fresh workspace with FEE_RULES_PATH=../sample-data/fee-rules.json. Those fee rules are explicitly synthetic. The independent manifest expects 79 order matches, 80 settlement matches, and 54 review cases. See [scenarios](sample-data/demo/README.md). Do not mix demonstration files with real records. The original first-slice manifest remains historical evidence for rule order-payment-1.
 
 ## Tests
 

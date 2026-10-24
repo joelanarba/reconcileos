@@ -1,6 +1,6 @@
 # Implemented Reconciliation Rules
 
-Rule version: order-payment-1. These rules describe the first working slice. Settlement and fee comparisons are not active yet.
+Rule version: three-source-1. Each run freezes source records and its fee configuration. Older order-payment-1 runs remain historical results and are marked stale.
 
 ## Source Eligibility
 
@@ -36,12 +36,12 @@ Python integers perform matching and aggregation. API monetary minor units and s
 
 Affected recorded value avoids adding every case amount separately. Connect unresolved cases that share linked source identities and connect accepted match evidence. For each connected group and currency, value distinct active order records if present; otherwise value payments once per provider transaction key; otherwise value settlement gross evidence. For conflicting repeated payment values within one currency, use the largest recorded value for that key. Sum the resulting group values by currency. Candidate evidence can connect records for this conservative record-valuation policy without approving a financial relationship. The result is a measure of affected source records, not confirmed loss or an independent assertion about funds.
 
-The four-order fixture demonstrates the overlap rule: partial and unmatched-payment cases for one order contribute GHS 60.00 once, and repeated-notification and duplicate-row cases contribute their related GHS 95.00 order once. See sample-data/slice1/expected-results.json.
+The four-order fixture demonstrates the overlap rule: partial and unmatched-payment cases for one order contribute GHS 60.00 once, and repeated-notification and duplicate-row cases contribute their related GHS 95.00 order once. With settlement evidence checks enabled, the small fixture also flags three missing-evidence cases; see sample-data/slice1/expected-results-complete.json. The original first-slice manifest is preserved separately.
 
 ## Snapshot and Allocation Invariants
 
 The same snapshot and rule configuration produce identical normalized decisions, stable case keys, and monetary summaries. Execution IDs and timestamps differ between runs. Later imports mark earlier snapshots stale but do not rewrite them.
 
-Persisted active allocation keys are unique per run and relationship type. They include the order row, payment row, and logical payment key. Results and the completed status commit together. A failed result transaction does not expose partial matches or cases.
+Persisted active allocation keys are unique per run and relationship type. They include the order or settlement row, payment row, and logical payment key, separately for each relationship type. Results and the completed status commit together. A failed result transaction does not expose partial matches or cases.
 
-The next slice adds settlement evidence, explicit synthetic fee configuration, and the remaining summary definitions. No current result independently proves a bank settlement or a real provider integration.
+Payment-settlement matching requires unique provider and transaction identity, equal currency and gross amount, net equal to gross minus fee, and an exact configured fee. Multiple candidates create ambiguous_settlement cases. Reference-linked gross, currency, or net-equation differences create settlement_discrepancy; an unexpected configured fee creates fee_discrepancy. No configured provider/currency rule creates fee_rule_missing. Missing provider/reference evidence creates missing_settlement_evidence and does not prove failure. Unreliable or orphan settlement records create unmatched_settlement.\n\nFee expectations use integer arithmetic: (gross_minor * basis_points + 5000) // 10000 + fixed_minor. This rounds the percentage half up to the nearest minor unit. No default percentage is inferred. sample-data/fee-rules.json is explicitly synthetic and must be replaced for real records.\n\nMatched settlement value sums accepted recorded net amounts once. Matched order value sums accepted order gross amounts once. These are separate metrics. Missing-settlement counts refer to distinct eligible payments with missing-evidence cases. No current result independently proves a bank settlement or a real provider integration.

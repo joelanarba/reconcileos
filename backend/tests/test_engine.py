@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from app.services.reconciliation.engine import reconcile
+from app.services.reconciliation.engine import reconcile_orders as reconcile
 
 
 def order(identity="order-1", reference="SYN-1", amount=10000, currency="GHS", status="open"):

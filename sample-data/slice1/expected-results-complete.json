@@ -1,0 +1,29 @@
+{
+  "synthetic": true,
+  "rule_version": "three-source-1",
+  "total_orders": 4,
+  "total_payment_records": 5,
+  "total_settlement_records": 0,
+  "total_eligible_payments": 3,
+  "total_payment_value": {"GHS": "30550"},
+  "matched_order_count": 1,
+  "matched_order_value": {"GHS": "12550"},
+  "matched_settlement_count": 0,
+  "matched_settlement_value": {},
+  "match_count": 1,
+  "excluded_duplicate_payment_records": 2,
+  "excluded_duplicate_payment_value": {"GHS": "19000"},
+  "unresolved_discrepancy_count": 9,
+  "unresolved_discrepancy_value": {"GHS": "51050"},
+  "duplicate_notification_count": 1,
+  "missing_payment_count": 1,
+  "missing_settlement_evidence_count": 3,
+  "category_counts": {
+    "duplicate_import_row": 1,
+    "duplicate_notification": 1,
+    "missing_payment": 1,
+    "partial_payment": 1,
+    "unmatched_payment": 2,
+    "missing_settlement_evidence": 3
+  }
+}

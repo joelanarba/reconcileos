@@ -19,3 +19,4 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://127.0.0.1:5173", "http://localhost:5173"]
     max_upload_bytes: int = Field(default=10485760, ge=1024, le=10485760)
     max_import_rows: int = Field(default=10000, ge=1, le=10000)
+    fee_rules_path: str | None = None

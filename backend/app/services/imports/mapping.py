@@ -10,6 +10,7 @@ from app.services.imports.csv_parser import TEMPLATES, content_hash, parse_row
 
 
 LABELS = {"order_ref": "Order reference", "transaction_ref": "Transaction reference", "amount": "Amount", "currency": "Currency", "ordered_at": "Order date", "paid_at": "Payment date", "status": "Status", "provider": "Payment provider", "description": "Description"}
+LABELS.update({"settlement_ref": "Settlement reference", "payment_ref": "Related transaction reference", "gross_amount": "Gross amount", "fee_amount": "Fee amount", "net_amount": "Net amount", "settled_at": "Settlement date"})
 ALIASES = {
     "order_ref": {"orderref", "orderreference", "orderid", "ordernumber", "orderno", "invoiceref", "invoicenumber", "invoiceid", "invoiceno", "merchantreference", "merchantref"},
     "transaction_ref": {"transactionref", "transactionreference", "transactionid", "transactionnumber", "paymentref", "paymentreference", "paymentid", "receiptid", "receiptnumber", "reference", "referenceid", "transactionno"},
@@ -22,9 +23,19 @@ ALIASES = {
     "description": {"description", "details", "narration", "notes", "note", "memo", "item", "product", "remarks"},
 }
 STATUS_ALIASES = {
+    "settlements": {},
     "orders": {"open": "open", "new": "open", "pending": "open", "unpaid": "open", "processing": "open", "completed": "completed", "complete": "completed", "paid": "completed", "fulfilled": "completed", "delivered": "completed", "shipped": "completed", "cancelled": "cancelled", "canceled": "cancelled", "void": "cancelled", "refunded": "cancelled"},
     "payments": {"successful": "successful", "success": "successful", "succeeded": "successful", "paid": "successful", "completed": "successful", "complete": "successful", "approved": "successful", "settled": "successful", "pending": "pending", "processing": "pending", "initiated": "pending", "queued": "pending", "failed": "failed", "failure": "failed", "declined": "failed", "unsuccessful": "failed", "cancelled": "failed", "canceled": "failed", "reversed": "reversed", "refunded": "reversed"},
 }
+
+ALIASES.update({
+    "settlement_ref": {"settlementref", "settlementreference", "settlementid", "payoutref", "payoutreference", "payoutid", "reference", "id"},
+    "payment_ref": ALIASES["transaction_ref"] - {"reference", "referenceid"},
+    "gross_amount": {"grossamount", "gross", "transactionamount", "paymentamount", "amount", "grossminor", "grossamountminor"},
+    "fee_amount": {"feeamount", "fee", "fees", "processingfee", "transactionfee", "charges", "feeminor", "feeamountminor"},
+    "net_amount": {"netamount", "net", "settledamount", "settlementamount", "payoutamount", "netminor", "netamountminor"},
+    "settled_at": {"settledat", "settlementdate", "settleddate", "payoutdate", "date", "datetime", "timestamp"},
+})
 
 
 def header_key(value):
@@ -38,7 +49,7 @@ def suggest_mapping(headers, source_type):
         candidates = []
         for header in headers:
             normalized = header_key(re.sub(r" \[[0-9]+\]$", "", header).replace("GH\u20b5", "GHS").replace("GH\u00a2", "GHS"))
-            if field == "amount":
+            if field in ("amount", "gross_amount", "fee_amount", "net_amount"):
                 normalized = re.sub(r"(ghs|usd|eur|gbp|jpy|kwd)$", "", normalized)
             if normalized in aliases:
                 candidates.append(header)
@@ -169,11 +180,12 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
         if field not in mapping or column is not None and column not in headers:
             raise AppError("invalid_mapping", "A selected column does not belong to this worksheet or record type.")
         mapping[field] = column
-    amount_header = (mapping.get("amount") or "").upper().replace("GH\u20b5", "GHS").replace("GH\u00a2", "GHS")
+    primary_amount = "gross_amount" if source_type == "settlements" else "amount"
+    amount_header = (mapping.get(primary_amount) or "").upper().replace("GH\u20b5", "GHS").replace("GH\u00a2", "GHS")
     amount_header = amount_header.replace("\u20ac", "EUR")
     currency_hints = re.findall(r"(?:^|[^A-Z])(GHS|USD|EUR|GBP|JPY|KWD)(?=$|[^A-Z])", amount_header)
     amount_heading_key = header_key(amount_header)
-    if amount_heading_key[:-3] in ALIASES["amount"] and amount_heading_key[-3:].upper() in PRECISION:
+    if amount_heading_key[:-3] in ALIASES[primary_amount] and amount_heading_key[-3:].upper() in PRECISION:
         currency_hints.append(amount_heading_key[-3:].upper())
     currency_hint = currency_hints[0] if len(set(currency_hints)) == 1 else None
     annotated_codes = re.findall(r"[\[(]\s*([A-Z]{3})\s*[\])]", amount_header)
@@ -191,7 +203,7 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
     excluded = set(options.excluded_rows)
     transformations = 0
     defaults = {"currency": options.default_currency, "provider": options.default_provider, "status": options.default_status or ("open" if source_type == "orders" else ""),
-                "ordered_at": options.default_date, "paid_at": options.default_date}
+                "ordered_at": options.default_date, "paid_at": options.default_date, "settled_at": options.default_date}
     unknown_statuses = set()
     for source in table["rows"]:
         if source["source_row"] <= header_row or not any(value.strip() for value in source["cells"]):
@@ -232,7 +244,7 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
                     value = options.status_map.get(value, STATUS_ALIASES[source_type].get(header_key(value), value.strip().lower()))
                     if value not in set(STATUS_ALIASES[source_type].values()):
                         unknown_statuses.add(original)
-                elif field in ("order_ref", "transaction_ref") and coordinate in numeric_cells:
+                elif field in ("order_ref", "transaction_ref", "settlement_ref", "payment_ref") and coordinate in numeric_cells:
                     value = re.sub(r"\.0+$", "", value)
                 elif field == "description" and len(value.strip()) > 500:
                     value = value.strip()[:500]
@@ -244,22 +256,35 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
                 normalization_errors.append({"field": field, "message": str(error)})
                 canonical[field] = value
         edit_values = dict(canonical)
-        try:
-            amount_column = mapping.get("amount")
-            numeric_amount = bool(amount_column and f"{row_number}:{headers.index(amount_column) + 1}" in numeric_cells and "amount" not in corrections)
-            amount = normalize_amount(canonical.get("amount", ""), canonical.get("currency", ""), options.decimal_style, numeric_amount)
-            if options.amount_unit == "minor":
-                if not re.fullmatch(r"[0-9]+", amount) or canonical.get("currency") not in PRECISION:
-                    raise ValueError("Minor-unit amounts must be whole non-negative integers in a supported currency.")
-                amount = format(Decimal(amount).scaleb(-PRECISION[canonical["currency"]]), "f")
-            elif minor_hint:
-                raise ValueError("The amount column identifies minor units. Select minor units above before confirming.")
-            if amount != canonical.get("amount", ""):
-                changes.append("Recognized amount formatting without changing its exact value.")
-            canonical["amount"] = amount
-        except (ValueError, InvalidOperation) as error:
-            normalization_errors.append({"field": "amount", "message": str(error)})
-        date_field = "ordered_at" if source_type == "orders" else "paid_at"
+        for amount_field in (("gross_amount", "fee_amount", "net_amount") if source_type == "settlements" else ("amount",)):
+            try:
+                amount_column = mapping.get(amount_field)
+                heading = (amount_column or "").upper().replace("GH\u20b5", "GHS").replace("GH\u00a2", "GHS").replace("\u20ac", "EUR")
+                heading_key = header_key(heading)
+                codes = re.findall(r"(?:^|[^A-Z])([A-Z]{3})(?=$|[^A-Z])", heading)
+                codes = [code for code in codes if code in PRECISION or re.search(r"[\[(]\s*" + code + r"\s*[\])]", heading) and code not in ("NET", "TAX", "FEE", "VAT", "DUE", "SUM")]
+                if heading_key[:-3] in ALIASES[amount_field] and heading_key[-3:].upper() in PRECISION:
+                    codes.append(heading_key[-3:].upper())
+                if any(code != canonical.get("currency") for code in codes):
+                    raise ValueError("This amount heading identifies a different or unsupported currency. Review the mapping before import.")
+                for symbol, code in (("$", "USD"), ("\u00a3", "GBP"), ("\u00a5", "JPY")):
+                    if symbol in heading and code != canonical.get("currency"):
+                        raise ValueError("This amount heading identifies a different currency. Review the mapping before import.")
+                field_minor_hint = re.sub(r"(ghs|usd|eur|gbp|jpy|kwd)$", "", heading_key).endswith(("minor", "minorunits", "pesewas", "pesewa", "cents"))
+                numeric_amount = bool(amount_column and f"{row_number}:{headers.index(amount_column) + 1}" in numeric_cells and amount_field not in corrections)
+                amount = normalize_amount(canonical.get(amount_field, ""), canonical.get("currency", ""), options.decimal_style, numeric_amount)
+                if options.amount_unit == "minor":
+                    if not re.fullmatch(r"[0-9]+", amount) or canonical.get("currency") not in PRECISION:
+                        raise ValueError("Minor-unit amounts must be whole non-negative integers in a supported currency.")
+                    amount = format(Decimal(amount).scaleb(-PRECISION[canonical["currency"]]), "f")
+                elif minor_hint or field_minor_hint:
+                    raise ValueError("The amount column identifies minor units. Select minor units above before confirming.")
+                if amount != canonical.get(amount_field, ""):
+                    changes.append(f"Recognized {LABELS[amount_field]} formatting without changing its exact value.")
+                canonical[amount_field] = amount
+            except (ValueError, InvalidOperation) as error:
+                normalization_errors.append({"field": amount_field, "message": str(error)})
+        date_field = {"orders": "ordered_at", "payments": "paid_at", "settlements": "settled_at"}[source_type]
         try:
             date_value = normalize_date(canonical.get(date_field, ""), options, timezone)
             if date_value != canonical.get(date_field, ""):
@@ -285,6 +310,8 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
         errors = normalization_errors + [error for error in errors if error["field"] not in failed_fields]
         row_hash = content_hash(raw)
         warnings = []
+        if source_type == "settlements" and not errors and parsed["gross_minor"] - parsed["fee_minor"] != parsed["net_minor"]:
+            warnings.append("Gross minus fee differs from recorded net. Values are retained for reconciliation review.")
         if row_hash in seen_rows:
             warnings.append(f"Identical source row also appears at row {seen_rows[row_hash]}. Evidence will be retained.")
         seen_rows.setdefault(row_hash, row_number)
@@ -297,7 +324,7 @@ def build_preview(document, source_type, options: ImportOptions, max_rows, *, in
         raise AppError("empty_file", "No transaction rows were found below the selected header. Choose a different header row or worksheet.")
     if excluded - used_rows or set(options.corrections) - {str(number) for number in used_rows}:
         raise AppError("invalid_correction", "A corrected or excluded row does not belong to the selected worksheet.")
-    fields = [{"key": field, "label": LABELS[field], "required": field not in ("description", "currency", "status") and not (field == "order_ref" and source_type == "payments")} for field in mapping]
+    fields = [{"key": field, "label": LABELS[field], "required": field not in ("description", "currency", "status", "payment_ref") and not (field == "order_ref" and source_type == "payments")} for field in mapping]
     return {"columns": headers, "rows": records, "_source": document,
             "import_info": {"format": document["format"], "encoding": document.get("encoding"), "delimiter": document.get("delimiter"),
                             "sheets": [candidate["name"] for candidate in tables], "sheet": table["name"], "header_row": header_row, "mapping": mapping, "fields": fields,

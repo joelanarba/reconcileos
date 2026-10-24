@@ -9,6 +9,7 @@ from app.core.time import parse_timestamp
 TEMPLATES = {
     "orders": ["order_ref", "amount", "currency", "ordered_at", "status", "description"],
     "payments": ["provider", "transaction_ref", "order_ref", "amount", "currency", "paid_at", "status", "description"],
+    "settlements": ["provider", "settlement_ref", "payment_ref", "gross_amount", "fee_amount", "net_amount", "currency", "settled_at", "description"],
 }
 
 
@@ -39,20 +40,29 @@ def parse_row(raw: dict, source_type: str):
     currency = parsed.get("currency", "")
     if currency not in PRECISION:
         errors.append({"field": "currency", "message": "Unsupported currency. Use GHS, USD, EUR, GBP, JPY, or KWD."})
-    field("amount", lambda value: parse_amount(value, currency), "expected_minor" if source_type == "orders" else "amount_minor")
-    date_field = "ordered_at" if source_type == "orders" else "paid_at"
+    if source_type == "settlements":
+        for amount_field, target, allow_zero in (("gross_amount", "gross_minor", False), ("fee_amount", "fee_minor", True), ("net_amount", "net_minor", True)):
+            field(amount_field, lambda value, zero=allow_zero: parse_amount(value, currency, allow_zero=zero), target)
+    else:
+        field("amount", lambda value: parse_amount(value, currency), "expected_minor" if source_type == "orders" else "amount_minor")
+    date_field = {"orders": "ordered_at", "payments": "paid_at", "settlements": "settled_at"}[source_type]
     field(date_field, lambda value: parse_timestamp(value).isoformat())
     field("description", lambda value: value.strip())
     if len(parsed.get("description", "")) > 500:
         errors.append({"field": "description", "message": "Description must contain at most 500 characters."})
-    status = raw.get("status", "").strip().lower()
-    allowed = ("open", "completed", "cancelled") if source_type == "orders" else ("successful", "pending", "failed", "reversed")
-    if status not in allowed:
-        errors.append({"field": "status", "message": "Supported statuses: " + ", ".join(allowed) + "."})
-    parsed["status" if source_type == "orders" else "provider_status"] = status
-    field("order_ref", lambda value: identifier(value, optional=source_type == "payments"))
-    if source_type == "payments":
-        field("transaction_ref", identifier)
+    if source_type != "settlements":
+        status = raw.get("status", "").strip().lower()
+        allowed = ("open", "completed", "cancelled") if source_type == "orders" else ("successful", "pending", "failed", "reversed")
+        if status not in allowed:
+            errors.append({"field": "status", "message": "Supported statuses: " + ", ".join(allowed) + "."})
+        parsed["status" if source_type == "orders" else "provider_status"] = status
+        field("order_ref", lambda value: identifier(value, optional=source_type == "payments"))
+        if source_type == "payments":
+            field("transaction_ref", identifier)
+    else:
+        field("settlement_ref", identifier)
+        field("payment_ref", lambda value: identifier(value, optional=True))
+    if source_type != "orders":
         provider = raw.get("provider", "").strip().upper()
         if not re.fullmatch(r"[A-Z0-9][A-Z0-9_]{0,29}", provider):
             errors.append({"field": "provider", "message": "Identify the payment provider using the mapping settings or a source column."})

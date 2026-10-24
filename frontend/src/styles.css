@@ -1100,6 +1100,7 @@ input[type=checkbox] {
     position:static;
     width:auto;
     flex-direction:row;
+    flex-wrap:wrap;
     align-items:center;
     border-right:0;
     border-bottom:1px solid var(--border);
@@ -1124,7 +1125,9 @@ input[type=checkbox] {
   }
   .sidebar nav {
     display:flex;
-    margin-left:auto
+    flex-wrap:wrap;
+    flex:1 1 100%;
+    margin-left:0
   }
   .sidebar nav a {
     font-size:11px;

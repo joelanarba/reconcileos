@@ -1,9 +1,10 @@
 from collections import Counter, defaultdict
 
+from app.core.money import expected_fee
 from app.services.imports.csv_parser import content_hash
 
 
-RULE_VERSION = "order-payment-1"
+RULE_VERSION = "three-source-1"
 
 
 def record_key(record: dict) -> str:
@@ -71,6 +72,8 @@ def affected_value(snapshot: dict, cases: list, matches: list) -> dict:
 def summarize(snapshot: dict, matches: list, cases: list, eligible: list, duplicate_count: int) -> dict:
     orders = {record["id"]: record for record in snapshot["orders"]}
     matched_orders = {match["order_id"] for match in matches if match["kind"] == "order_payment"}
+    settlements = {record["id"]: record for record in snapshot.get("settlements", [])}
+    matched_settlements = {match["settlement_id"] for match in matches if match["kind"] == "payment_settlement"}
     unresolved = [case for case in cases if case.get("status", "open") != "resolved"]
     eligible_ids = {payment["id"] for payment in eligible}
     excluded = [payment for payment in snapshot["payments"] if payment["provider_status"] == "successful" and payment["id"] not in eligible_ids]
@@ -84,15 +87,20 @@ def summarize(snapshot: dict, matches: list, cases: list, eligible: list, duplic
         "excluded_duplicate_payment_value": money_totals(excluded, "amount_minor"),
         "matched_order_count": len(matched_orders),
         "matched_order_value": money_totals([orders[order_id] for order_id in sorted(matched_orders)], "expected_minor"),
+        "match_count": len(matches),
+        "total_settlement_records": len(settlements),
+        "matched_settlement_count": len(matched_settlements),
+        "matched_settlement_value": money_totals([settlements[key] for key in sorted(matched_settlements)], "net_minor"),
+        "missing_settlement_evidence_count": len({case["payment_id"] for case in unresolved if case["type"] == "missing_settlement_evidence"}),
         "unresolved_discrepancy_count": len(unresolved),
         "unresolved_discrepancy_value": affected_value(snapshot, cases, matches),
         "duplicate_notification_count": duplicate_count,
-        "missing_payment_count": len({case["order_id"] for case in cases if case["type"] == "missing_payment"}),
+        "missing_payment_count": len({case["order_id"] for case in unresolved if case["type"] == "missing_payment"}),
         "category_counts": dict(sorted(Counter(case["type"] for case in unresolved).items())),
     }
 
 
-def reconcile(snapshot: dict) -> dict:
+def reconcile_orders(snapshot: dict) -> dict:
     orders = sorted(snapshot["orders"], key=lambda record: record["id"])
     payments = sorted(snapshot["payments"], key=lambda record: record["id"])
     cases = {}
@@ -185,3 +193,70 @@ def reconcile(snapshot: dict) -> dict:
                  candidates={"order_ids": [order["id"] for order in candidates], "payment_ids": [payment["id"]]})
     case_list = [cases[key] for key in sorted(cases)]
     return {"matches": matches, "discrepancies": case_list, "summary": summarize(snapshot, matches, case_list, eligible, duplicate_count)}
+
+
+def eligible_payments(snapshot):
+    counts = Counter(payment_key(payment) for payment in snapshot["payments"])
+    return [payment for payment in snapshot["payments"] if payment["provider_status"] == "successful" and counts[payment_key(payment)] == 1]
+
+
+def reconcile(snapshot: dict) -> dict:
+    result = reconcile_orders(snapshot)
+    cases = {case["case_key"]: case for case in result["discrepancies"]}
+    matches = result["matches"]
+    eligible = sorted(eligible_payments(snapshot), key=lambda record: record["id"])
+    settlements = sorted(snapshot.get("settlements", []), key=lambda record: record["id"])
+    by_reference, payments_by_reference = defaultdict(list), defaultdict(list)
+    for settlement in settlements:
+        if settlement.get("payment_ref"):
+            by_reference[settlement["provider"] + ":" + settlement["payment_ref"]].append(settlement)
+    for payment in sorted(snapshot["payments"], key=lambda record: record["id"]):
+        payments_by_reference[payment_key(payment)].append(payment)
+
+    def add_case(kind, description, related, *, candidates=None, details=None, severity="medium"):
+        linked = sorted({record_key(record) for record in related})
+        key = content_hash([kind, linked])
+        primary = {record_type + "_id": next((record["id"] for record in related if record["record_type"] == record_type), None) for record_type in ("order", "payment", "settlement")}
+        cases[key] = {"case_key": key, "type": kind, "description": description, "severity": severity, "status": "open", **primary,
+                      "evidence": {"records": linked, "rule": description, "candidates": candidates or {}, "details": details or {}}}
+
+    examined = set()
+    fee_rules = snapshot.get("fee_configuration", {}).get("rules", {})
+    for payment in eligible:
+        related = by_reference.get(payment_key(payment), [])
+        if not related:
+            add_case("missing_settlement_evidence", "No settlement record identifies this provider transaction. This is an evidence gap, not proof of a failed settlement.", [payment])
+            continue
+        examined.update(record["id"] for record in related)
+        if len(related) != 1:
+            add_case("ambiguous_settlement", "Multiple settlement records identify the same provider transaction. No settlement was allocated automatically.", [payment] + related,
+                     candidates={"payment_ids": [payment["id"]], "settlement_ids": [record["id"] for record in related]})
+            continue
+        settlement = related[0]
+        if settlement["currency"] != payment["currency"] or int(settlement["gross_minor"]) != int(payment["amount_minor"]) or int(settlement["gross_minor"]) - int(settlement["fee_minor"]) != int(settlement["net_minor"]):
+            add_case("settlement_discrepancy", "Provider and transaction reference agree, but currency, gross amount, or the gross-minus-fee equation differs. No amount tolerance or currency conversion is applied.", [payment, settlement], severity="high")
+            continue
+        rule = fee_rules.get(payment["provider"], {}).get(payment["currency"])
+        if rule is None:
+            add_case("fee_rule_missing", "Settlement evidence exists, but no fee rule is configured for this provider and currency. An exact settlement match cannot be confirmed.", [payment, settlement])
+            continue
+        expected = expected_fee(int(settlement["gross_minor"]), rule["basis_points"], rule["fixed_minor"])
+        details = {"fee_rule": rule, "expected_fee_minor": expected, "recorded_fee_minor": int(settlement["fee_minor"])}
+        if int(settlement["fee_minor"]) != expected:
+            add_case("fee_discrepancy", "Recorded settlement fee differs from the configured expectation. The recorded gross, fee, and net amounts remain unchanged.", [payment, settlement], details=details)
+            continue
+        matches.append({"kind": "payment_settlement", "order_id": None, "payment_id": payment["id"], "settlement_id": settlement["id"], "origin": "automatic",
+                        "evidence": {"records": sorted([record_key(payment), record_key(settlement)]), "rule": "Unique provider transaction reference, equal currency and gross, exact configured fee, and net equal to gross minus fee.", "details": details}})
+    for settlement in settlements:
+        if settlement["id"] not in examined:
+            related = payments_by_reference.get(settlement["provider"] + ":" + (settlement.get("payment_ref") or ""), [])
+            add_case("unmatched_settlement", "Settlement has no reliable eligible payment. Missing references, ineligible statuses, and repeated payment notifications require human review.", [settlement] + related)
+    rows = defaultdict(list)
+    for settlement in settlements:
+        rows[settlement["row_hash"]].append(settlement)
+    for group in rows.values():
+        if len(group) > 1:
+            add_case("duplicate_import_row", "Identical imported settlement rows were retained as source evidence.", group, severity="low")
+    case_list = [cases[key] for key in sorted(cases)]
+    matches.sort(key=lambda match: (match["kind"], match["payment_id"], match.get("order_id") or "", match.get("settlement_id") or ""))
+    return {"matches": matches, "discrepancies": case_list, "summary": summarize(snapshot, matches, case_list, eligible, result["summary"]["duplicate_notification_count"])}

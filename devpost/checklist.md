@@ -13,7 +13,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
 ## Slices
 
-- [ ] **1. Import orders and payments and inspect a real reconciliation run**
+- [x] **1. Import orders and payments and inspect a real reconciliation run**
   Becomes usable: A running Windows application where the operator previews and confirms order and payment CSVs, starts reconciliation, and inspects stored exact matches and unresolved order-payment cases.
   Why now: Proves the distinctive financial engine through the browser immediately, while exposing dependency, database, import, and persistence risks before the remaining workflow grows around them.
   PRD ref: `prd.md > The Core Journey` steps 1-7; `prd.md > CSV Import and Validation`; `prd.md > Deterministic Reconciliation`; `prd.md > Local Workspace and Record Integrity`.
@@ -23,7 +23,7 @@ Commands referring to backend tests run from backend using its virtual environme
   Learner check: Open http://127.0.0.1:5173, import the supplied small order/payment fixtures, run reconciliation, and open one match and one unresolved case. Report anything confusing or inconsistent with the intended operational layout. This is the planned early hands-on checkpoint before continuing.
   Commit: `feat: reconcile imported orders and payments`
 
-  Mechanical verification: dependency installation succeeded on Python 3.14.3 and Node.js 24.13.1. Alembic initialized the ordinary local database and fresh isolated test databases; schema parity and actual foreign-key enforcement passed. Initial checks passed 52 backend tests, 6 frontend tests, and one real browser workflow. After actual learner feedback, the importer was revised for CSV/Excel recognition, mapping, and preview review. Revised verification passed 68 backend tests, 8 frontend tests, the production build, pip check, and 3 real Edge browser tests. Original financial fixture results remained unchanged. Screenshots were inspected. The Starlette HTTPX deprecation warning remains recorded. Learner feedback was received; the source milestone commit is next.
+  Mechanical verification: dependency installation succeeded on Python 3.14.3 and Node.js 24.13.1. Alembic initialized the ordinary local database and fresh isolated test databases; schema parity and actual foreign-key enforcement passed. Initial checks passed 52 backend tests, 6 frontend tests, and one real browser workflow. After actual learner feedback, the importer was revised for CSV/Excel recognition, mapping, and preview review. Revised verification passed 68 backend tests, 8 frontend tests, the production build, pip check, and 3 real Edge browser tests. Original financial fixture results remained unchanged. Screenshots were inspected. The Starlette HTTPX deprecation warning remains recorded. Commit 262b08b records the verified slice under the learner's author and committer identity. The revised import workflow remains part of the learner's final retry.
 
 - [ ] **2. Reconcile settlement evidence and inspect complete financial summaries**
   Becomes usable: The operator imports all three sources and sees exact settlement relationships, configured fee checks, missing settlement evidence, complete run summaries, a useful dashboard, and filterable evidence-backed results.
@@ -64,7 +64,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
 - [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
 
-No learner feedback or final-review execution has occurred yet. Add agreed revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
+Early import feedback is recorded above. Final learner review has not occurred yet. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
 
 ## Code Tour and App Map
 

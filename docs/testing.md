@@ -32,8 +32,14 @@ Executed after this revision: 68 backend tests passed, 8 frontend tests passed, 
 
 Tests also cover exact minor-unit interpretation, ambiguous separators, currency hints that cannot silently become GHS, unknown payment statuses, source-preserving corrections, exclusion reasons, stale previews, immutable confirmed imports, native Excel dates, multiple sheets, and formula handling. Macro execution and formula recalculation are not performed.
 
+## Three-source Milestone
+
+The completed engine passes 85 backend tests, including actual settlement import, configured fees, missing rules, ambiguous settlements, identity and currency differences, exact net arithmetic, and the independent 100-order/100-payment/90-settlement manifest. All 8 frontend tests and the production build pass. The full three-source Edge workflow passed after correcting navigation wrapping at 390px. The CSV/Excel recognition browser checks also passed in the preceding run. The original first-slice fixture now has a separate complete-engine manifest because absent settlement evidence adds three cases; its historical oracle is preserved.
+
+Browser tests now initialize a uniquely named ignored database for each invocation. Ordinary development data is not reset or reused. The synthetic fee configuration is explicitly supplied only to the test service. Test-service ports remain 8011 and 5174.
+
 ## Remaining
 
-The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. Settlement reconciliation, the larger synthetic dataset, case review actions, CSV reports, AI validation, full final review, and the learning wrap-up belong to subsequent checklist work.
+The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. Case review actions, CSV reports, AI validation, final review, and the learning wrap-up belong to subsequent checklist work.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.

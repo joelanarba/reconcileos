@@ -15,7 +15,7 @@ export default defineConfig({
     {
       command: `"${backendPython}" -m alembic -c "${migrationConfig}" upgrade head && "${backendPython}" -m uvicorn app.main:app --app-dir "${backendDirectory}" --host 127.0.0.1 --port 8011`,
       url: 'http://127.0.0.1:8011/api/health',
-      env: { DATABASE_URL: 'sqlite:///./data/browser-check.db', CORS_ORIGINS: '["http://127.0.0.1:5174"]' },
+      env: { DATABASE_URL: `sqlite:///./data/browser-check-${Date.now()}.db`, FEE_RULES_PATH: path.resolve('../sample-data/fee-rules.json'), CORS_ORIGINS: '["http://127.0.0.1:5174"]' },
       reuseExistingServer: false,
     },
     {

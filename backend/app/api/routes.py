@@ -9,12 +9,14 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core.config import PROVIDERS, WORKSPACE_ID
 from app.core.errors import AppError
+from app.core.fees import fee_configuration
 from app.core.money import PRECISION
 from app.models.entities import Discrepancy, ImportBatch, ReconciliationMatch, ReconciliationRun, Workspace
 from app.services.imports.csv_parser import TEMPLATES
 from app.services.imports.service import confirm_batch, preview_batch, remap_batch
 from app.schemas.imports import ImportOptions
 from app.services.reconciliation.service import create_run
+from app.services.reconciliation.engine import RULE_VERSION
 
 
 router = APIRouter(prefix="/api")
@@ -65,7 +67,8 @@ def run_data(run, current_revision):
     data = entity_data(run)
     data.pop("snapshot")
     data["current_summary"] = run.original_summary
-    data["is_stale"] = run.input_revision != current_revision
+    data["is_stale"] = run.input_revision != current_revision or run.rule_version != RULE_VERSION
+    data["fee_configuration"] = run.snapshot.get("fee_configuration")
     data["source_counts"] = {source: len(run.snapshot[source]) for source in ("orders", "payments", "settlements")}
     return public(data)
 
@@ -93,18 +96,19 @@ def health(session=Depends(get_session)):
 def workspace(request: Request, session=Depends(get_session)):
     data = entity_data(session.get(Workspace, WORKSPACE_ID))
     return public(data | {"operator": request.app.state.settings.local_operator, "mode": "local", "currency_precision": PRECISION, "providers": PROVIDERS,
-                          "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "order_payment_reconciliation", "source_evidence"], "rule_scope": "Order and payment checks", "max_upload_bytes": request.app.state.settings.max_upload_bytes})
+                          "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes,
+                          "fee_configuration": fee_configuration(request.app.state.settings)})
 
 
 @router.get("/templates/{source_type}")
-def template(source_type: Literal["orders", "payments"]):
+def template(source_type: Literal["orders", "payments", "settlements"]):
     output = io.StringIO(newline="")
     csv.writer(output).writerow(TEMPLATES[source_type])
     return Response(output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{source_type}-template.csv"'})
 
 
 @router.post("/imports/preview")
-async def preview(request: Request, source_type: Literal["orders", "payments"], session=Depends(get_session)):
+async def preview(request: Request, source_type: Literal["orders", "payments", "settlements"], session=Depends(get_session)):
     limit = request.app.state.settings.max_upload_bytes
     content_length = request.headers.get("content-length")
     if content_length and (not content_length.isdecimal() or int(content_length) > limit):
@@ -147,7 +151,7 @@ def apply_mapping(batch_id: str, options: ImportOptions, request: Request, sessi
 
 @router.post("/runs")
 def run_reconciliation(request: Request, session=Depends(get_session)):
-    run = create_run(session, request.app.state.settings.local_operator)
+    run = create_run(session, request.app.state.settings.local_operator, fee_configuration(request.app.state.settings))
     return run_data(run, session.get(Workspace, WORKSPACE_ID).input_revision)
 
 
@@ -161,6 +165,18 @@ def runs(page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), s
 @router.get("/runs/{run_id}")
 def run_detail(run_id: str, session=Depends(get_session)):
     return run_data(get_run(session, run_id), session.get(Workspace, WORKSPACE_ID).input_revision)
+
+
+@router.get("/dashboard")
+def dashboard(session=Depends(get_session)):
+    revision = session.get(Workspace, WORKSPACE_ID).input_revision
+    records = session.scalars(select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID).order_by(ReconciliationRun.started_at.desc(), ReconciliationRun.id).limit(10)).all()
+    latest = next((run for run in records if run.status == "completed"), None)
+    if latest is None:
+        latest = session.scalar(select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID, ReconciliationRun.status == "completed").order_by(ReconciliationRun.started_at.desc()).limit(1))
+    batches = session.scalars(select(ImportBatch).where(ImportBatch.workspace_id == WORKSPACE_ID).order_by(ImportBatch.created_at.desc(), ImportBatch.id).limit(8)).all()
+    return public({"latest_run": run_data(latest, revision) if latest else None, "recent_runs": [run_data(run, revision) for run in records],
+                   "recent_imports": [{key: value for key, value in entity_data(batch).items() if key != "preview"} for batch in batches]})
 
 
 @router.get("/runs/{run_id}/matches")

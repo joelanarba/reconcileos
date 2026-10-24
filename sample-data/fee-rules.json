@@ -1,0 +1,10 @@
+{
+  "name": "Synthetic demonstration rules",
+  "synthetic": true,
+  "rules": {
+    "MTN_MOMO": {"GHS": {"basis_points": 100, "fixed_minor": 0}},
+    "TELECEL_CASH": {"GHS": {"basis_points": 100, "fixed_minor": 0}},
+    "BANK_TRANSFER": {"GHS": {"basis_points": 0, "fixed_minor": 0}},
+    "PAYMENT_GATEWAY": {"GHS": {"basis_points": 100, "fixed_minor": 0}}
+  }
+}

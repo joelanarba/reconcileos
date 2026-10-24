@@ -15,7 +15,7 @@ def test_complete_first_slice_matches_independent_manifest(imported_client):
     response = imported_client.post("/api/runs")
     assert response.status_code == 200, response.text
     run = response.json()
-    expected = json.loads((SAMPLE_ROOT / "expected-results.json").read_text())
+    expected = json.loads((SAMPLE_ROOT / "expected-results-complete.json").read_text())
     assert run["status"] == "completed"
     for field, value in expected.items():
         if field in run["original_summary"]:

@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from app.core.config import WORKSPACE_ID
 from app.core.errors import AppError
 from app.core.time import parse_timestamp, utcnow
-from app.models.entities import AuditEvent, ImportBatch, Order, Payment, Workspace
+from app.models.entities import AuditEvent, ImportBatch, Order, Payment, Settlement, Workspace
 from app.schemas.imports import ImportOptions
 from app.services.imports.file_reader import SUPPORTED_EXTENSIONS, read_file
 from app.services.imports.mapping import build_preview
@@ -91,12 +91,12 @@ def confirm_batch(session, batch_id: str, actor: str, expected_revision: int | N
             raise AppError("stale_preview", "This preview changed. Inspect the current interpretation before confirming.", 409)
         if batch.status != "previewed" or batch.invalid_rows or not batch.valid_rows:
             raise AppError("invalid_batch", "Review the column mapping and rows that need attention before confirming.", 409)
-        model = Order if batch.source_type == "orders" else Payment
+        model = {"orders": Order, "payments": Payment, "settlements": Settlement}[batch.source_type]
         for record in batch.preview["rows"]:
             if record.get("excluded"):
                 continue
             values = dict(record["parsed"])
-            date_field = "ordered_at" if batch.source_type == "orders" else "paid_at"
+            date_field = {"orders": "ordered_at", "payments": "paid_at", "settlements": "settled_at"}[batch.source_type]
             values[date_field] = parse_timestamp(values[date_field])
             session.add(model(workspace_id=WORKSPACE_ID, import_batch_id=batch.id, source_row=record["source_row"], row_hash=record["row_hash"], raw=record["raw"], **values))
         batch.status = "confirmed"

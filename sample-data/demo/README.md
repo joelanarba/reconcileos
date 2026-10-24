@@ -1,0 +1,7 @@
+# Synthetic demonstration
+
+Every identifier and business description in these files is fictional. There are no live provider connections. Use the explicitly synthetic one-percent fee rule in ../fee-rules.json. The manifest is specified from the scenarios, independently of the reconciliation engine.
+
+Orders and original payments 3 through 75 demonstrate clean relationships. Notifications 1 and 2 are repeated as rows 96 and 97, so all four are excluded from automatic allocation. Payments 76 through 80 have unexpected fees. Payments 81 through 85 are partial. Payments 86 through 90 have incorrect order references. Settlement 89 has an inconsistent net amount, while settlement 90 points to payment 88 and creates competing settlement evidence. Payments 91 through 95 have no settlement evidence: 92 is overpaid, 93 uses USD against a GHS order, and 94 and 95 compete for order 94. Payment 98 has no order. Payment 99 is pending and 100 failed. Orders 95 through 100 have no successful matching-reference payment.
+
+Expected results: 79 accepted order relationships, 80 accepted settlement relationships, and 54 review cases. Case counts overlap. Affected recorded value is GHS 5,153.00 and USD 193.00, not a calculated loss. Matched settlement value is recorded net, while matched order value is expected gross. Regenerate with `python scripts/generate_demo.py` from the repository root. Never load these files into a workspace intended for real records.
