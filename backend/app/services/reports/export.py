@@ -5,7 +5,7 @@ import json
 from sqlalchemy import select
 
 from app.core.errors import AppError
-from app.core.money import PRECISION
+from app.core.money import decimal_amount
 from app.models.entities import Discrepancy
 from app.services.investigations.review import current_summary
 
@@ -26,13 +26,6 @@ def report_data(session, run):
         raise AppError("incomplete_run", "Reports require a completed reconciliation run.", 409)
     return {"run_id": run.id, "snapshot_hash": run.snapshot_hash, "rule_version": run.rule_version, "input_revision": run.input_revision,
             "started_at": run.started_at, "original_summary": run.original_summary, "current_summary": current_summary(session, run), "metric_definitions": DEFINITIONS}
-
-
-def decimal_amount(minor, currency):
-    amount, precision = int(minor), PRECISION[currency]
-    sign = "-" if amount < 0 else ""
-    whole, fraction = divmod(abs(amount), 10 ** precision)
-    return sign + str(whole) + ("." + str(fraction).zfill(precision) if precision else "")
 
 
 def safe_cell(value):

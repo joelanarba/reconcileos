@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.money import expected_fee, parse_amount
+from app.core.money import decimal_amount, expected_fee, parse_amount
 from app.core.time import parse_timestamp
 
 
@@ -29,3 +29,14 @@ def test_timestamps_require_timezone_and_normalize_utc():
     assert parse_timestamp("2026-10-20T10:00:00+01:00").isoformat() == "2026-10-20T09:00:00+00:00"
     with pytest.raises(ValueError):
         parse_timestamp("2026-10-20T10:00:00")
+
+
+@pytest.mark.parametrize("minor,currency,expected", [(12550, "GHS", "125.50"), (125, "JPY", "125"), (1005, "KWD", "1.005"), (0, "GHS", "0.00"), (-1, "GHS", "-0.01"), ("9007199254740993", "GHS", "90071992547409.93")])
+def test_minor_unit_display_is_exact_and_currency_aware(minor, currency, expected):
+    assert decimal_amount(minor, currency) == expected
+
+
+@pytest.mark.parametrize("minor,currency", [(125.50, "GHS"), (True, "GHS"), ("1.5", "GHS"), (1, "ZZZ")])
+def test_minor_unit_display_rejects_implicit_numeric_coercion(minor, currency):
+    with pytest.raises(ValueError):
+        decimal_amount(minor, currency)

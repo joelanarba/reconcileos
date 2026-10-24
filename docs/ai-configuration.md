@@ -1,13 +1,13 @@
 # Optional AI Investigation
 
-OpenAI is the selected provider. The prepared configuration uses https://api.openai.com/v1 with gpt-5.4-mini-2026-03-17 and json_schema output. No API key is distributed with the repository. A live request has not been verified at this milestone. Controlled HTTP tests establish adapter behavior, evidence validation, and failure handling, not model quality or account access.
+OpenAI is the selected provider. The configuration uses https://api.openai.com/v1 with gpt-5.4-mini-2026-03-17 and json_schema output. Live verification completed with synthetic evidence on October 24, 2026. No API key is distributed with the repository. The result establishes the tested request, validation, and persistence path; it does not establish general model accuracy.
 
 ## OpenAI Setup
 
 The selected snapshot supports Chat Completions and Structured Outputs according to the [official model documentation](https://developers.openai.com/api/docs/models/gpt-5.4-mini). The adapter uses the documented max_completion_tokens parameter and requests store=false. The strict schema limits case and supporting-record IDs to the supplied evidence; backend validation also enforces all field bounds. See the [Chat Completions reference](https://developers.openai.com/api/reference/python/resources/chat/subresources/completions/methods/create) and [Structured Outputs guide](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=chat).
 
 1. Create or select a key in your [OpenAI API project](https://platform.openai.com/api-keys).
-2. Add it after LLM_API_KEY= in the ignored backend/.env file. Keep it out of chat, source files, and frontend variables. Endpoint, model, and output-format settings are prepared there. The key remains empty until you add it locally.
+2. Add it after LLM_API_KEY= in your ignored backend/.env file. Keep it out of chat, source files, and frontend variables. Endpoint, model, and output-format settings are prepared there; the shared example contains no key.
 3. Restart the backend. Investigations shows the selected provider and enables Request AI assistance only when complete configuration is loaded. That indication is not evidence of a successful provider request.
 4. From backend, run the following only when you intend to authorize one bounded API request using synthetic records:
 
@@ -29,10 +29,18 @@ Restart the backend, open a case under Investigations, check the displayed provi
 
 ## Evidence and Validation
 
-Only the selected case's snapshot records are eligible. Send at most 20 records and 16 KiB, including typed record IDs, relevant references, currency, integer amounts, dates, statuses, and descriptions truncated to 500 characters. Original raw columns and unrelated records are omitted. Context reductions are recorded in metadata. The fixed system instruction treats descriptions and references as untrusted evidence rather than instructions.
+Only the selected case's snapshot records are eligible. Send at most 20 records and 16 KiB, including typed record IDs, relevant references, currency, dates, statuses, and descriptions truncated to 500 characters. Each monetary fact includes explicit currency precision, integer minor units as a string, an exact decimal string, and its formatted display. The shared integer formatter also serves reports. The model is instructed to copy a displayed amount exactly when mentioning it. Original raw columns and unrelated records are omitted. Context reductions are recorded in metadata. The fixed system instruction treats descriptions and references as untrusted evidence rather than instructions.
 
 The response must identify the selected discrepancy, propose a hypothesis, cite unique allowed typed record IDs, classify confidence as low/medium/high, describe alternatives, suggest a next investigation step, and state limitations. Extra fields, missing limitations, invented supporting IDs, wrong cases, and malformed structures are rejected. A version check rejects a response if another review action changed the case during the request. Validated explanations and safe provider/model/context metadata are appended to investigation history with an audit entry. Case disposition, imported values, and accepted financial relationships do not change.
 
 Requests have an overall timeout of 3 to 45 seconds, default 20, with a separate connection timeout. Redirects and retries are disabled. Response envelopes are limited to 64 KiB, generated content to 16 KiB. Explicitly requested uncompressed JSON keeps response limits straightforward. Provider errors, unavailable configuration, timeout, and unsupported responses preserve deterministic reconciliation and manual review.
 
 Human review remains necessary. A schema-valid hypothesis can still be wrong. The application does not present it as proof of receipt, settlement, or an approved match.
+
+## Executed Live Check
+
+Two bounded requests were made with entirely synthetic order/payment records in separate ignored databases. The first passed the transport, response-schema, evidence-ID, persistence, and unchanged-summary checks, but inspection found that its hypothesis described 12550 minor units as GHS 12,550. That is an incorrect amount display and was not accepted as evidence of explanation accuracy. The original isolated result remains preserved.
+
+The correction supplies explicit precision and deterministic decimal/display values, with automated GHS, JPY, and KWD checks. The second live response correctly used GHS 125.50, retained valid supporting IDs, saved an investigation and audit event, and left the case status, snapshot, original summary, and current financial summary unchanged. The complete backend suite passed 144 tests. A new Uvicorn process then loaded the saved result, and an actual Edge browser check verified the hypothesis, exact source amounts, and consent-gated request control without another AI call.
+
+Both requests used the selected GPT-5.4 Mini snapshot. This is one synthetic scenario and a verified correction, not a quality evaluation across all discrepancy types. See docs/testing.md for the actual trial identifiers and scope.

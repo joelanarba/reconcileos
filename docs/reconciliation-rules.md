@@ -24,6 +24,8 @@ Supported precision is GHS=2, USD=2, EUR=2, GBP=2, JPY=0, and KWD=3. A value suc
 
 Python integers perform matching and aggregation. API monetary minor units and summary monetary totals are decimal strings. Browser formatting uses BigInt. Currency codes always accompany values, and totals stay grouped by currency.
 
+The shared decimal_amount function uses integer division and currency precision to render exact decimal strings for both CSV reports and AI evidence. AI receives separately labeled minor units, decimal amounts, formatted displays, and precision. This avoids presenting an unlabeled minor-unit integer as a currency-unit amount. It does not grant the model authority to change recorded money or financial relationships.
+
 ## Summary Definitions
 
 - Total orders includes all imported order records, with the cancelled count shown separately.

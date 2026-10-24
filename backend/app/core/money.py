@@ -6,6 +6,20 @@ PRECISION = {"GHS": 2, "USD": 2, "EUR": 2, "GBP": 2, "JPY": 0, "KWD": 3}
 MAX_MINOR = 1_000_000_000_000
 
 
+def decimal_amount(minor: int | str, currency: str) -> str:
+    if currency not in PRECISION:
+        raise ValueError("Unsupported currency precision.")
+    if type(minor) is int:
+        amount = minor
+    elif isinstance(minor, str) and re.fullmatch(r"-?[0-9]+", minor):
+        amount = int(minor)
+    else:
+        raise ValueError("Minor-unit values must be integers or integer strings.")
+    precision = PRECISION[currency]
+    whole, fraction = divmod(abs(amount), 10 ** precision)
+    return ("-" if amount < 0 else "") + str(whole) + ("." + str(fraction).zfill(precision) if precision else "")
+
+
 def parse_amount(value: str, currency: str, *, allow_zero: bool = False) -> int:
     if currency not in PRECISION:
         raise ValueError("Unsupported currency. Use GHS, USD, EUR, GBP, JPY, or KWD.")
