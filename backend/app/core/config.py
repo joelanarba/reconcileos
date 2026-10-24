@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,3 +20,9 @@ class Settings(BaseSettings):
     max_upload_bytes: int = Field(default=10485760, ge=1024, le=10485760)
     max_import_rows: int = Field(default=10000, ge=1, le=10000)
     fee_rules_path: str | None = None
+    llm_base_url: str | None = None
+    llm_api_key: SecretStr | None = None
+    llm_model: str | None = Field(default=None, max_length=120)
+    llm_timeout_seconds: int = Field(default=20, ge=3, le=45)
+    llm_response_format: Literal["json_object", "json_schema"] = "json_object"
+    llm_allow_loopback: bool = False

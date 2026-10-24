@@ -22,7 +22,7 @@ The real-service Microsoft Edge workflow passed: 1 test, 19.6 seconds including 
 
 Earlier attempts exposed a Windows executable-path issue in test startup, an Edge response-inspection issue, a test race when a previous run was already visible, and narrow-page overflow from a visually hidden table heading. The launcher, state-based waits, and table containing block were corrected before the passing run. These failed attempts are not counted as passing checks.
 
-From frontend, run npm.cmd run test:e2e. The configuration starts backend and frontend test services on ports 8011 and 5174 and migrates backend/data/browser-check.db. Ordinary development uses ports 8000 and 5173 and backend/data/reconcileos.db.
+From frontend, run npm.cmd run test:e2e. The configuration starts backend and frontend test services on ports 8011 and 5174. The first milestone used backend/data/browser-check.db; current runs use uniquely named databases as described below. Ordinary development uses ports 8000 and 5173 and backend/data/reconcileos.db.
 
 ## Import UX Revision
 
@@ -38,8 +38,6 @@ The completed engine passes 85 backend tests, including actual settlement import
 
 Browser tests now initialize a uniquely named ignored database for each invocation. Ordinary development data is not reset or reused. The synthetic fee configuration is explicitly supplied only to the test service. Test-service ports remain 8011 and 5174.
 
-## Remaining
-
 ## Review and Reporting Milestone
 
 Executed verification passed 97 backend tests, 10 frontend tests, and the production build. The extended real-service Edge workflow passed in 41.8 seconds of browser actions, covering notes, candidate approval, resolve, reopen, explicit reversal, reload, and downloading an exact summary CSV. Desktop case and report screenshots were inspected. The longer browser journey uses a 90-second test budget; individual assertions still have their normal short waits.
@@ -48,6 +46,22 @@ After the browser services stopped, a separate Uvicorn process reopened the same
 
 ## Remaining Work
 
-The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. AI validation, final review, and the learning wrap-up belong to subsequent checklist work.
+The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. AI validation is complete with controlled responses. Final learner review and the learning wrap-up remain open.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.
+
+## Final Local Verification
+
+Executed on Windows with Python 3.14.3, Node.js 24.13.1, npm 11.8.0, and installed Microsoft Edge:
+
+- Backend: 120 tests passed. The final run completed in 58.79 seconds with the recorded Starlette TestClient HTTPX deprecation warning.
+- Dependency consistency: pip check found no broken requirements.
+- Frontend: 12 tests passed across five files, including reason/version guards and explicit AI evidence consent with provider failure.
+- Production frontend build: TypeScript and Vite passed.
+- Real-service browser suite: 4 tests passed, covering the offline source guide with scripts disabled, ordinary CSV interpretation and source-preserving correction, genuine XLSX/XLS reading, and the complete three-source reconciliation/review/export journey. The final suite completed in approximately 1.4 minutes including service lifecycle. The financial browser journey itself took 35.6 seconds.
+- Independent synthetic oracle: exact summaries and source relationships passed for 100 orders, 100 payment records, and 90 settlements. The manifest was not derived from the engine.
+- Actual process restart: the separate Uvicorn check described above verified persisted review and monetary state after reopening the browser database.
+- Ordinary development service: a stale backend process was restarted without resetting its database. Port 8000 then reported all three source types, the complete rule scope, a 10 MiB upload limit, an available Dashboard endpoint, and unconfigured AI. The frontend on port 5173 returned HTTP 200. A browser refresh is necessary to discard old client state.
+- Source guide: source anchors were checked, the standalone HTML rendered with JavaScript disabled, and the screenshot was inspected. No completed learner tour is implied.
+
+AI tests use HTTPX controlled responses. They cover valid persistence, wrong-case and unsupported/duplicate IDs, extra fields, invalid confidence, context limits, untrusted prompt-like descriptions, missing configuration, provider errors, response size, invalid envelopes, redirects, request deadlines, and a concurrent case change. No live provider request was made. The independently runnable PostgreSQL verification script is prepared but unexecuted.

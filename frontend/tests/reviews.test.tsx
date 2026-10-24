@@ -17,7 +17,8 @@ function mount() {
 afterEach(() => vi.unstubAllGlobals())
 
 it('requires a documented reason and submits the current case version', async () => {
-  const fetchMock = vi.fn(async (_input: unknown, options: RequestInit) => {
+  const fetchMock = vi.fn(async (input: unknown, options: RequestInit) => {
+    if (String(input).endsWith('/workspace')) return new Response(JSON.stringify({ ai: { available: false, message: 'AI is not configured.' } }), { status: 200 })
     expect(new Headers(options.headers).get('Content-Type')).toBe('application/json')
     expect(JSON.parse(String(options.body))).toEqual({ action: 'resolve', expected_version: 1, reason: 'Checked the source statement.' })
     return new Response(JSON.stringify({ ...item, status: 'resolved', version: 2 }), { status: 200 })
@@ -29,11 +30,11 @@ it('requires a documented reason and submits the current case version', async ()
   await user.type(screen.getByLabelText('Reason or investigation note'), 'Checked the source statement.')
   await user.click(screen.getByRole('button', { name: 'Resolve case' }))
   expect(await screen.findByText('Review saved with audit history.')).toBeInTheDocument()
-  expect(fetchMock).toHaveBeenCalledOnce()
+  expect(fetchMock.mock.calls.filter(call => String(call[0]).endsWith('/review'))).toHaveLength(1)
 })
 
 it('shows a stale-review conflict and preserves the written note', async () => {
-  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ detail: { message: 'This case changed. Refresh its evidence and history before trying again.' } }), { status: 409 })))
+  vi.stubGlobal('fetch', vi.fn(async (input: unknown) => String(input).endsWith('/workspace') ? new Response(JSON.stringify({ ai: { available: false, message: 'AI is not configured.' } }), { status: 200 }) : new Response(JSON.stringify({ detail: { message: 'This case changed. Refresh its evidence and history before trying again.' } }), { status: 409 })))
   mount()
   const user = userEvent.setup()
   await user.type(screen.getByLabelText('Reason or investigation note'), 'Keep this note.')

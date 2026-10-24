@@ -5,6 +5,8 @@ from app.api.routes import entity_data, evidence_records, get_run, get_session, 
 from app.core.config import WORKSPACE_ID
 from app.models.entities import AuditEvent, Investigation, ReviewDecision
 from app.schemas.reviews import ReviewRequest
+from app.schemas.ai import AIRequest
+from app.services.investigations.ai import investigate
 from app.services.investigations.review import active_matches, get_case, review_case
 
 
@@ -30,4 +32,10 @@ def detail(case_id: str, session=Depends(get_session)):
 @router.post("/investigations/{case_id}/review")
 def review(case_id: str, payload: ReviewRequest, request: Request, session=Depends(get_session)):
     review_case(session, case_id, payload, request.app.state.settings.local_operator)
+    return case_detail(session, case_id)
+
+
+@router.post("/investigations/{case_id}/ai")
+async def ai_investigation(case_id: str, payload: AIRequest, request: Request, session=Depends(get_session)):
+    await investigate(session, request.app.state.settings, case_id, payload.expected_version, request.app.state.settings.local_operator)
     return case_detail(session, case_id)

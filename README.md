@@ -2,7 +2,7 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-Development is in progress. The application supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI assistance is the remaining build work.
+This local proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI investigation assistance is implemented through a server-configured JSON adapter. Live-provider execution remains unverified because no provider credentials have been configured.
 
 ## Current Workflow
 
@@ -28,7 +28,7 @@ Affected recorded value groups connected unresolved source evidence and values e
 
 ## Run on Windows
 
-Prerequisites: Python 3.11 or newer and a current Node.js runtime supported by the pinned Vite version. The installation and checks for this working slice use Python 3.14.3, Node.js 24.13.1, and npm 11.8.0. Other runtime combinations have not been verified here.
+Prerequisites: Python 3.11 or newer and a current Node.js runtime supported by the pinned Vite version. The installation and checks for this application use Python 3.14.3, Node.js 24.13.1, and npm 11.8.0. Other runtime combinations have not been verified here.
 
 No Docker, WSL, virtualization changes, or PostgreSQL installation is needed.
 
@@ -90,13 +90,13 @@ Browser workflow, from frontend, using the installed Microsoft Edge:
 npm.cmd run test:e2e
 ```
 
-The browser configuration starts separate local services on ports 8011 and 5174 and uses the ignored backend/data/browser-check.db database. It does not use the ordinary local application's database. Fixtures are idempotent, and the verification database must remain dedicated to these synthetic scenarios. Test artifacts are written to ignored frontend/test-results.
+The browser configuration starts separate local services on ports 8011 and 5174 and creates a uniquely named ignored backend/data/browser-check-<timestamp>.db database for each invocation. It does not use the ordinary local application's database. Fixtures are idempotent, and the verification database must remain dedicated to these synthetic scenarios. Test artifacts are written to ignored frontend/test-results.
 
 Backend tests use actual Alembic migrations on isolated temporary SQLite databases. Engine tests use smaller independent inputs, and API tests compare the persisted results against the manually specified synthetic manifest. Frontend component tests use controlled HTTP responses; the browser test uses real services. See [testing](docs/testing.md) for executed results and remaining checks.
 
 ## AI Boundaries
 
-The current slice does not call an LLM. The approved later AI investigation feature will send only bounded evidence for a selected case, validate structured responses and record IDs, and label explanations as hypotheses. AI will not create transactions, change amounts, approve matches, resolve cases, or determine financial truth. Provider credentials will stay server-side. Live-provider behavior is unverified until configured and executed.
+AI assistance is optional and currently unconfigured. No default API key, paid account, or model is bundled. The server supports a configurable chat-completion JSON contract through LLM_BASE_URL, LLM_API_KEY, LLM_MODEL, LLM_TIMEOUT_SECONDS, and LLM_RESPONSE_FORMAT in backend/.env. The base URL excludes /chat/completions, which the adapter appends. Select a provider/model that explicitly supports the documented contract, then verify it with synthetic evidence. Keep keys out of frontend files and Git. Restart the backend after changing settings.\n\nThe operator must explicitly consent before sending a selected case's evidence. The adapter sends at most 20 relevant records and 16 KiB, treats source text as untrusted, and validates the case, schema, and every returned supporting record ID. Only a validated hypothesis is saved. Provider failures preserve manual work and deterministic results. AI cannot create transactions, change amounts, approve matches, resolve cases, or determine financial truth.\n\nControlled HTTP-response tests passed. No live-provider request has run, so provider compatibility and model quality have not been established. See [AI configuration](docs/ai-configuration.md).
 
 ## Architecture and Database Portability
 
@@ -114,6 +114,6 @@ See [architecture](docs/architecture.md) and [known limitations](docs/limitation
 
 The installed Build With AI: Basics Learn Skill Pack is sourced from challengepost/learn-ai-basics, with installation provenance recorded in skills-lock.json. The actual 1-start interview, 2-scope, 3-prd, and 4-spec reviews produced the approved planning documents in [devpost](devpost/). Their public entry points are [scope.md](scope.md), [prd.md](prd.md), and [spec.md](spec.md).
 
-The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. The first three implementation slices are complete. Early hands-on feedback produced the flexible importer revision. The final AI slice, learner retry, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
+The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. All four implementation slices are implemented and mechanically checked. Early hands-on feedback produced the flexible importer revision. The learner retry, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
 
-The 6-ship workflow, public repository publishing, demo video, learner-written submission fields, and final submission checklist remain pending. No submission or deployment is claimed.
+The 6-ship workflow, public repository publishing, demo video, learner-written submission fields, and learner submission remain pending. A factual [preparation checklist](docs/submission-checklist.md) and [demo operations guide](docs/demo.md) are included. No submission or deployment is claimed.

@@ -76,7 +76,8 @@ def test_manual_approval_allocation_conflict_reopen_and_explicit_reversal(client
     assert act(client, case, "reverse_match", match_id=match_id).status_code == 409
     updated = client.get(f"/api/runs/{run['id']}").json()
     assert updated["current_summary"] == updated["original_summary"]
-    match = client.get(f"/api/runs/{run['id']}/matches").json()["items"][0]
+    assert client.get(f"/api/runs/{run['id']}/matches").json()["total"] == 0
+    match = client.get(f"/api/runs/{run['id']}/matches?active_only=false").json()["items"][0]
     assert match["active"] is False
     with client.app.state.sessions() as session:
         assert session.scalar(select(func.count()).select_from(MatchAllocation)) == 0

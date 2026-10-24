@@ -37,7 +37,7 @@ Commands referring to backend tests run from backend using its virtual environme
 
   Mechanical verification: 85 backend tests, 8 frontend tests, and the production build passed. The three-source API result exactly matched the independent 100/100/90-record manifest. CSV/Excel browser checks passed, and the complete workflow passed after fixing narrow navigation wrapping. The final dashboard check compared displayed values with the actual API and passed in Edge; screenshots were inspected. Commit a39de46 preserves this milestone with the verified learner author and committer identity. Human review remains the next slice.
 
-- [ ] **3. Investigate discrepancies, persist decisions, and export reports**
+- [x] **3. Investigate discrepancies, persist decisions, and export reports**
   Becomes usable: A finance officer can inspect cases, add notes, approve or reject supported proposals, resolve and reopen cases, explicitly reverse a manual allocation, inspect audit history, and download consistent CSV reports.
   Why now: Builds review and reporting on already verified automatic results, making the core operational loop complete before optional AI assistance is added.
   PRD ref: `prd.md > Human Review, Notes, and Audit History`; `prd.md > Reports and Export`; `prd.md > Dashboard and Monetary Summaries`; `prd.md > States and Boundaries`.
@@ -47,7 +47,7 @@ Commands referring to backend tests run from backend using its virtual environme
   Learner check: Open an unresolved case, inspect its source rows, add a note, make an applicable documented review decision, resolve and reopen it, then export a report. Confirm the history explains what changed and who performed it. The final hands-on session will revisit this complete workflow after slice 4.
   Commit: `feat: add discrepancy review and report exports`
 
-  Mechanical verification: 97 backend tests, 10 frontend tests, and the production build passed. The extended Edge journey performed notes, supported approval, resolve/reopen, explicit reversal, reload, and exact CSV download. A new Uvicorn process then reopened the isolated browser database and verified five audit actions, case version 6, the note, released manual allocations, and original/current monetary totals. Screenshots were inspected. Original automatic results remain unchanged. Git checkpoint follows verification.
+  Mechanical verification: 97 backend tests, 10 frontend tests, and the production build passed. The extended Edge journey performed notes, supported approval, resolve/reopen, explicit reversal, reload, and exact CSV download. A new Uvicorn process then reopened the isolated browser database and verified five audit actions, case version 6, the note, released manual allocations, and original/current monetary totals. Screenshots were inspected. Original automatic results remain unchanged. Commit a190578 records the verified milestone with the learner's author and committer identity.
 
 - [ ] **4. Add bounded AI assistance and verify the complete local proof of concept**
   Becomes usable: Optional configured AI assistance returns validated evidence-linked hypotheses, failures leave manual work available, and the full local application has executed verification, accurate documentation, and a reproducible demonstration path.
@@ -58,6 +58,8 @@ Commands referring to backend tests run from backend using its virtual environme
   Verify (mechanical): Run AI tests with controlled HTTP responses for valid output, unsupported IDs, wrong case, invalid structure, prompt-like source text, bounded payloads, missing configuration, provider errors, and timeout. Run the full backend suite, all frontend tests, and production build. Initialize a fresh SQLite database using documented migrations and repeat the complete CSV-to-review-to-export workflow against actual services. Compare synthetic results with the manifest, inspect the rendered interface, and verify persistence across restart. Scan new tracked project artifacts for secrets, restricted styling/text, ignored personal context, and unrelated files. Verify author and committer for each milestone. Execute a live-provider test only if credentials and provider configuration are supplied; otherwise mark it unexecuted. Mark PostgreSQL, deployment, and other unavailable checks explicitly unexecuted rather than passing.
   Learner check: Start the application with the README's Windows commands and explore all five screens, import the synthetic files, reconcile, inspect and review a case, export a report, and try AI availability or failure behavior. Report broken, confusing, or missing behavior so it can be resolved before readiness is confirmed. This is the planned final kick-the-tires checkpoint.
   Commit: `feat: add investigation assistance and verify local workflow`
+
+  Mechanical verification: the final Windows runs passed 120 backend tests, 12 frontend tests, the production build, pip check, and 4 real Edge checks. The browser covered the full CSV/Excel-to-reconciliation-to-review-to-export journey and the offline reference guide. The independent synthetic oracle passed. Controlled AI tests validated evidence, bounded requests, safe failure, and concurrent case changes; no live-provider request ran. An actual new Uvicorn process verified review persistence. The ordinary local backend was also restarted after a stale process was discovered; its API now exposes all three sources and the dashboard with AI correctly unconfigured. PostgreSQL and AWS checks remain unexecuted. The implementation checkpoint follows these checks; learner final review is still separate.
 
 ## Hands-on Checkpoints
 
@@ -74,10 +76,10 @@ Early import feedback is recorded above. Final learner review has not occurred y
 
 - [ ] Learning activity complete: use one actual source action and its test, or a brief evidence-based recap if the learner prefers concise discussion.
 - [ ] Optional edit and transfer reflection addressed: offer once where useful and record the actual response or that the activity was declined/not applicable.
-- [ ] devpost/app-map.html generated from finished code, checked, and shown, including a project-grounded practice to reuse.
+- [x] devpost/app-map.html generated as a reference guide from implemented code, checked offline with JavaScript disabled, and shown with a project-grounded practice to reuse. The learning activity and final learner review remain unperformed; the guide is not a completed tour.
 
-Activity and evidence: pending the finished implementation and actual learner interaction. A useful reference route will trace import confirmation through the API, deterministic engine, and displayed evidence using real paths and symbols.
-Route and stops: pending actual source paths; planned file names are not presented as completed learning stops.
+Activity and evidence: an offline reference map is prepared and mechanically checked. No final learner interaction, hands-on tour, or reflection is recorded. The reference route traces confirmed imports, deterministic snapshot reconciliation, and source evidence, with actual test pointers.
+Route and stops: backend/app/services/imports/service.py confirm_batch; backend/app/services/reconciliation/service.py create_run and engine.py reconcile; frontend/src/features/reconciliation/ReconciliationPage.tsx and components/EvidenceDialog.tsx. These are reference stops, not completed learner navigation.
 Edit outcome: not performed.
 Reflection: not offered yet; any personal answer belongs in the ignored learner profile.
 Activity mode: pending; record a live walkthrough, explicit static fallback, focused alternative, prior practice, or recap accurately.

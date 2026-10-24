@@ -18,6 +18,7 @@ from app.schemas.imports import ImportOptions
 from app.services.reconciliation.service import create_run
 from app.services.reconciliation.engine import RULE_VERSION
 from app.services.investigations.review import active_matches, current_summary
+from app.services.investigations.ai import availability
 
 
 router = APIRouter(prefix="/api")
@@ -98,7 +99,7 @@ def workspace(request: Request, session=Depends(get_session)):
     data = entity_data(session.get(Workspace, WORKSPACE_ID))
     return public(data | {"operator": request.app.state.settings.local_operator, "mode": "local", "currency_precision": PRECISION, "providers": PROVIDERS,
                           "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes,
-                          "fee_configuration": fee_configuration(request.app.state.settings)})
+                          "fee_configuration": fee_configuration(request.app.state.settings), "ai": availability(request.app.state.settings)})
 
 
 @router.get("/templates/{source_type}")
@@ -181,11 +182,11 @@ def dashboard(session=Depends(get_session)):
 
 
 @router.get("/runs/{run_id}/matches")
-def run_matches(run_id: str, search: str = Query("", max_length=128), page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), session=Depends(get_session)):
+def run_matches(run_id: str, search: str = Query("", max_length=128), page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), active_only: bool = True, session=Depends(get_session)):
     run = get_run(session, run_id)
     records = session.scalars(select(ReconciliationMatch).where(ReconciliationMatch.run_id == run.id, ReconciliationMatch.workspace_id == WORKSPACE_ID).order_by(ReconciliationMatch.id)).all()
     accepted_ids = {match.id for match in active_matches(session, run.id)}
-    items = [entity_data(match) | {"active": match.id in accepted_ids, "source_records": evidence_records(run, match.evidence)} for match in records if matches_search(run, match.evidence, search)]
+    items = [entity_data(match) | {"active": match.id in accepted_ids, "source_records": evidence_records(run, match.evidence)} for match in records if (not active_only or match.id in accepted_ids) and matches_search(run, match.evidence, search)]
     return public(paginate(items, page, page_size))
 
 

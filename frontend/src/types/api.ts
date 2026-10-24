@@ -6,8 +6,9 @@ export type Workspace = {
   available_sources: SourceType[]; rule_scope: string; currency_precision: Record<string, number>
   max_upload_bytes?: number
   fee_configuration?: FeeConfiguration
+  ai?: { available: boolean; provider: string | null; model: string | null; message: string }
 }
-export type FeeConfiguration = { name: string; synthetic: boolean; rules: Record<string, Record<string, { basis_points: number; fixed_minor: number }>> }
+export type FeeConfiguration = { name: string; synthetic: boolean; rules: Record<string, Record<string, { basis_points: number; fixed_minor: string }>> }
 export type ImportOptions = {
   sheet?: string | null; header_row?: number | null; column_map: Record<string, string | null>
   default_currency: string; default_provider: string; default_status: string; default_date: string

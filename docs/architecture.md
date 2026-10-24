@@ -1,6 +1,6 @@
 # Current Architecture
 
-This document describes the implemented import, three-source reconciliation, and dashboard behavior. The approved full design is in devpost/spec.md; later slices are not treated as existing functionality here.
+This document describes the implemented local import, reconciliation, dashboard, review, reporting, and optional AI behavior. The approved full design is in devpost/spec.md; later slices are not treated as existing functionality here.
 
 ## Record Flow
 
@@ -37,7 +37,7 @@ ReconciliationMatch stores the explanation and source identities. MatchAllocatio
 - frontend/src/features: implemented Dashboard, Imports, Reconciliation, Investigations, and Reports screens.
 - frontend/src/components: shared controls and source evidence dialog.
 
-The review service validates state transitions, optimistic case versions, snapshot candidate membership, currency and amount equality, eligibility, and allocation uniqueness. Notes, decisions, version increments, and audit events commit together. Manual reversal releases allocation rows but retains the relationship and its history. Current summaries use active relationships and unresolved case state; original automatic summaries remain unchanged. Reports export both bases with exact currency values and neutralize formula-like CSV cells. Optional AI endpoints are the remaining build work.
+The review service validates state transitions, optimistic case versions, snapshot candidate membership, currency and amount equality, eligibility, and allocation uniqueness. Notes, decisions, version increments, and audit events commit together. Manual reversal releases allocation rows but retains the relationship and its history. Current summaries use active relationships and unresolved case state; original automatic summaries remain unchanged. Reports export both bases with exact currency values and neutralize formula-like CSV cells. The optional AI service captures bounded case evidence, requests a structured explanation from an operator-configured provider, validates supporting IDs, and rechecks case version before saving it. A stale or unsupported response is not persisted. No AI route calls the match or case-disposition actions.
 
 ## Local Security Boundary
 
@@ -45,4 +45,4 @@ Services bind to loopback by default, with explicit browser origins and trusted 
 
 Imported rows and snapshots have no edit/delete API. Audit events have no mutation route, and ORM guards reject ordinary object updates or deletes. Direct database administrators can still modify local files; no cryptographic immutability is claimed.
 
-Public service authentication and PostgreSQL behavior remain unverified and outside this local slice. Review safeguards are tested locally. The optional AI integration remains to be implemented and verified.
+Public service authentication and PostgreSQL behavior remain unverified and outside this local slice. Review safeguards are tested locally. The optional AI adapter is tested with controlled HTTP responses. Live-provider execution is unverified.
