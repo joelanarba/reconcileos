@@ -9,6 +9,8 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes import router
+from app.api.investigations import router as investigations_router
+from app.api.reports import router as reports_router
 from app.core.config import Settings
 from app.core.errors import AppError
 from app.db.session import database_engine, session_factory
@@ -58,6 +60,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse({"detail": {"code": "unexpected_error", "message": "The operation could not be completed. Existing records are preserved."}}, status_code=500)
 
     application.include_router(router)
+    application.include_router(investigations_router)
+    application.include_router(reports_router)
     return application
 
 

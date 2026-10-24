@@ -16,6 +16,7 @@ export function EvidenceDialog({ item, onClose }: { item: Match | Discrepancy; o
     <div className="dialog-content">
       <div className="rule-box"><h3>Decision rule</h3><p>{item.evidence.rule}</p>{'description' in item && item.description !== item.evidence.rule && <p>{item.description}</p>}</div>
       {'status' in item && <div className="inline-meta"><Badge value={item.status} /><Badge value={item.severity} /><span>Run {item.run_id.slice(0, 8)}</span></div>}
+      {'type' in item && <p><Link className="button primary" to={`/investigations?run=${item.run_id}&case=${item.id}`} onClick={onClose}>Open investigation<ArrowUpRight size={14} /></Link></p>}
       <h3 className="section-label">Supporting records <span>{item.source_records.length}</span></h3>
       {item.source_records.map(record => <article className="source-card" key={record.id}>
         <div className="source-heading"><span><FileText size={16} />{record.record_type === 'order' ? 'Order' : record.record_type === 'payment' ? 'Payment' : 'Settlement'}</span><Badge value={record.provider_status || record.status || 'recorded'} /></div>

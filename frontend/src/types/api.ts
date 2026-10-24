@@ -60,8 +60,15 @@ export type Evidence = { records: string[]; rule: string; candidates?: { order_i
 export type Match = {
   id: string; run_id: string; kind: string; origin: string; order_id: string | null; payment_id: string; settlement_id: string | null
   evidence: Evidence; source_records: SourceRecord[]
+  active?: boolean
 }
 export type Discrepancy = {
   id: string; run_id: string; type: string; severity: 'low' | 'medium' | 'high'; status: string
   description: string; evidence: Evidence; source_records: SourceRecord[]; version: number
+}
+export type CaseDetail = Discrepancy & {
+  snapshot_hash: string; manual_matches: Match[]
+  investigations: { id: string; kind: string; actor: string; explanation: string; evidence: Record<string, unknown>; suggested_action?: string; ai_metadata?: Record<string, unknown>; created_at: string }[]
+  decisions: { id: string; action: string; reason: string; actor: string; created_at: string }[]
+  audit_history: { id: string; action: string; actor: string; reason: string; previous_state: { status: string; version: number }; new_state: { status: string; version: number }; timestamp: string }[]
 }

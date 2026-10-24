@@ -40,6 +40,14 @@ Browser tests now initialize a uniquely named ignored database for each invocati
 
 ## Remaining
 
-The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. Case review actions, CSV reports, AI validation, final review, and the learning wrap-up belong to subsequent checklist work.
+## Review and Reporting Milestone
+
+Executed verification passed 97 backend tests, 10 frontend tests, and the production build. The extended real-service Edge workflow passed in 41.8 seconds of browser actions, covering notes, candidate approval, resolve, reopen, explicit reversal, reload, and downloading an exact summary CSV. Desktop case and report screenshots were inspected. The longer browser journey uses a 90-second test budget; individual assertions still have their normal short waits.
+
+After the browser services stopped, a separate Uvicorn process reopened the same isolated test database on port 8012. API checks verified case version 6, five persisted audit actions, one note, no active manual allocation after reversal, and unchanged original/current matched value. That verification process was stopped. The ordinary development database was not modified.
+
+## Remaining Work
+
+The learner reported early import feedback and the requested revision is implemented. A learner retry remains part of final review. AI validation, final review, and the learning wrap-up belong to subsequent checklist work.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.

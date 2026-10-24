@@ -34,10 +34,10 @@ ReconciliationMatch stores the explanation and source identities. MatchAllocatio
 - backend/app/services/reconciliation/service.py: consistent capture and atomic result persistence.
 - backend/app/api: local HTTP endpoints, pagination, search, evidence assembly, and money-safe serialization.
 - frontend/src/lib: typed HTTP client and BigInt monetary formatting.
-- frontend/src/features: implemented Dashboard, Imports, and Reconciliation screens.
+- frontend/src/features: implemented Dashboard, Imports, Reconciliation, Investigations, and Reports screens.
 - frontend/src/components: shared controls and source evidence dialog.
 
-The schema also contains investigation and review entities for the remaining approved slices. Human review actions, reports, and AI endpoints are not implemented at this milestone.
+The review service validates state transitions, optimistic case versions, snapshot candidate membership, currency and amount equality, eligibility, and allocation uniqueness. Notes, decisions, version increments, and audit events commit together. Manual reversal releases allocation rows but retains the relationship and its history. Current summaries use active relationships and unresolved case state; original automatic summaries remain unchanged. Reports export both bases with exact currency values and neutralize formula-like CSV cells. Optional AI endpoints are the remaining build work.
 
 ## Local Security Boundary
 
@@ -45,4 +45,4 @@ Services bind to loopback by default, with explicit browser origins and trusted 
 
 Imported rows and snapshots have no edit/delete API. Audit events have no mutation route, and ORM guards reject ordinary object updates or deletes. Direct database administrators can still modify local files; no cryptographic immutability is claimed.
 
-Public service authentication and PostgreSQL behavior remain unverified and outside this local slice. Review and AI safeguards in the approved specification will receive their own implementation and tests before being reported as working features.
+Public service authentication and PostgreSQL behavior remain unverified and outside this local slice. Review safeguards are tested locally. The optional AI integration remains to be implemented and verified.

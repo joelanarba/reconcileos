@@ -2,7 +2,7 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-Development is in progress. The application supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Case review actions, report exports, and AI assistance are the remaining approved build work.
+Development is in progress. The application supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI assistance is the remaining build work.
 
 ## Current Workflow
 
@@ -10,7 +10,9 @@ Development is in progress. The application supports order, payment, and settlem
 2. Review recognized headings and source rows. Adjust column mapping or date/number settings when needed. Correct or explicitly exclude problem rows in the preview with a reason; original cells remain unchanged.
 3. Confirm the selected validated records. All selected rows commit together or none do. Interpretation choices and exclusions remain in provenance.
 4. Start reconciliation against a stored input snapshot.
-5. Search exact matches and unresolved cases, inspect decision rules, and open original source values and import provenance.
+5. Search accepted relationships and unresolved cases, inspect rules, and open original source values and provenance.
+6. Open Investigations to add notes, approve or reject supported associations, resolve or reopen cases, and inspect audit history. Case disposition does not prove payment or settlement.
+7. Use Reports to export the original and current summaries or case evidence as formula-neutralized CSV.
 
 The application runs in clearly labeled local single-workspace mode. It does not authenticate operators, connect to payment providers, access bank accounts, or move money. Provider names identify the source labels in CSV files.
 
@@ -112,6 +114,6 @@ See [architecture](docs/architecture.md) and [known limitations](docs/limitation
 
 The installed Build With AI: Basics Learn Skill Pack is sourced from challengepost/learn-ai-basics, with installation provenance recorded in skills-lock.json. The actual 1-start interview, 2-scope, 3-prd, and 4-spec reviews produced the approved planning documents in [devpost](devpost/). Their public entry points are [scope.md](scope.md), [prd.md](prd.md), and [spec.md](spec.md).
 
-The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. Implementation is in its first slice; the early hands-on feedback checkpoint, subsequent slices, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
+The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. The first three implementation slices are complete. Early hands-on feedback produced the flexible importer revision. The final AI slice, learner retry, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
 
 The 6-ship workflow, public repository publishing, demo video, learner-written submission fields, and final submission checklist remain pending. No submission or deployment is claimed.

@@ -17,6 +17,7 @@ from app.services.imports.service import confirm_batch, preview_batch, remap_bat
 from app.schemas.imports import ImportOptions
 from app.services.reconciliation.service import create_run
 from app.services.reconciliation.engine import RULE_VERSION
+from app.services.investigations.review import active_matches, current_summary
 
 
 router = APIRouter(prefix="/api")
@@ -63,10 +64,10 @@ def get_run(session, run_id):
     return run
 
 
-def run_data(run, current_revision):
+def run_data(run, current_revision, session):
     data = entity_data(run)
     data.pop("snapshot")
-    data["current_summary"] = run.original_summary
+    data["current_summary"] = current_summary(session, run)
     data["is_stale"] = run.input_revision != current_revision or run.rule_version != RULE_VERSION
     data["fee_configuration"] = run.snapshot.get("fee_configuration")
     data["source_counts"] = {source: len(run.snapshot[source]) for source in ("orders", "payments", "settlements")}
@@ -152,19 +153,19 @@ def apply_mapping(batch_id: str, options: ImportOptions, request: Request, sessi
 @router.post("/runs")
 def run_reconciliation(request: Request, session=Depends(get_session)):
     run = create_run(session, request.app.state.settings.local_operator, fee_configuration(request.app.state.settings))
-    return run_data(run, session.get(Workspace, WORKSPACE_ID).input_revision)
+    return run_data(run, session.get(Workspace, WORKSPACE_ID).input_revision, session)
 
 
 @router.get("/runs")
 def runs(page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), session=Depends(get_session)):
     records = session.scalars(select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID).order_by(ReconciliationRun.started_at.desc(), ReconciliationRun.id)).all()
     revision = session.get(Workspace, WORKSPACE_ID).input_revision
-    return paginate([run_data(run, revision) for run in records], page, page_size)
+    return paginate([run_data(run, revision, session) for run in records], page, page_size)
 
 
 @router.get("/runs/{run_id}")
 def run_detail(run_id: str, session=Depends(get_session)):
-    return run_data(get_run(session, run_id), session.get(Workspace, WORKSPACE_ID).input_revision)
+    return run_data(get_run(session, run_id), session.get(Workspace, WORKSPACE_ID).input_revision, session)
 
 
 @router.get("/dashboard")
@@ -175,7 +176,7 @@ def dashboard(session=Depends(get_session)):
     if latest is None:
         latest = session.scalar(select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID, ReconciliationRun.status == "completed").order_by(ReconciliationRun.started_at.desc()).limit(1))
     batches = session.scalars(select(ImportBatch).where(ImportBatch.workspace_id == WORKSPACE_ID).order_by(ImportBatch.created_at.desc(), ImportBatch.id).limit(8)).all()
-    return public({"latest_run": run_data(latest, revision) if latest else None, "recent_runs": [run_data(run, revision) for run in records],
+    return public({"latest_run": run_data(latest, revision, session) if latest else None, "recent_runs": [run_data(run, revision, session) for run in records],
                    "recent_imports": [{key: value for key, value in entity_data(batch).items() if key != "preview"} for batch in batches]})
 
 
@@ -183,7 +184,8 @@ def dashboard(session=Depends(get_session)):
 def run_matches(run_id: str, search: str = Query("", max_length=128), page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), session=Depends(get_session)):
     run = get_run(session, run_id)
     records = session.scalars(select(ReconciliationMatch).where(ReconciliationMatch.run_id == run.id, ReconciliationMatch.workspace_id == WORKSPACE_ID).order_by(ReconciliationMatch.id)).all()
-    items = [entity_data(match) | {"source_records": evidence_records(run, match.evidence)} for match in records if matches_search(run, match.evidence, search)]
+    accepted_ids = {match.id for match in active_matches(session, run.id)}
+    items = [entity_data(match) | {"active": match.id in accepted_ids, "source_records": evidence_records(run, match.evidence)} for match in records if matches_search(run, match.evidence, search)]
     return public(paginate(items, page, page_size))
 
 
