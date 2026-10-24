@@ -46,7 +46,7 @@ After the browser services stopped, a separate Uvicorn process reopened the same
 
 ## Remaining Work
 
-The learner has retried other files and confirmed that the revised importer works. No additional import fix was requested. This is learner confirmation of import behavior, separate from the recorded automated checks. Review of the remaining core journey, explicit overall readiness, and the learning wrap-up remain open. AI validation is complete with controlled responses.
+The learner retried other files and confirmed the revised importer works, then confirmed reconciliation, case review, and report export also work. No further core-workflow change was requested. This is learner confirmation, separate from the recorded automated checks. AI validation is complete with controlled responses, but the live workspace still reports no configured provider or model. Provider connection, live AI verification, overall readiness, and the learning wrap-up remain open; another request to verify the same core screens is unnecessary.
 
 PostgreSQL migrations and integration tests, public deployment, and live LLM calls have not run. No SQLite or controlled-response check establishes those outcomes.
 

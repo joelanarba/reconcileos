@@ -64,13 +64,13 @@ Commands referring to backend tests run from backend using its virtual environme
 ## Hands-on Checkpoints
 
 - [x] Early usable behavior explored: the learner tried importing files and reported rejection of ordinary exports, missing Excel support, strict source naming, and concern about the unfinished product. The authorized import revision was implemented and mechanically verified. The learner has now retried other files and confirmed that the revised importer works. This confirms the affected import workflow; it does not establish final review of every screen.
-- [ ] Final kick-the-tires exploration and feedback completed: after slice 4, the learner explores the complete core journey and relevant awkward inputs; agreed revisions are recorded and verified.
+- [x] Final kick-the-tires exploration and feedback completed for the core workflow: after confirming imports with other files, the learner confirmed that reconciliation, case review, and report export all work. No further core-workflow fix was requested. The learner asked about the AI integration, whose live provider configuration remains outstanding.
 
 ## Final Review
 
 - [ ] Final review complete: feedback is resolved, checks pass, changes are committed, affected behavior has been retried by the learner, and the learner confirms readiness to ship.
 
-The learner confirmed that the revised importer now works with other files. No additional import change was requested. Review of reconciliation, investigation actions, report export, and explicit overall readiness remains unconfirmed. The remaining readiness question has been presented without marking the complete proof of concept reviewed. Add agreed final revisions here as unchecked tasks when feedback arrives; do not manufacture a revision requirement if the learner finds no changes necessary.
+The learner confirmed imports with other files, then confirmed that reconciliation, investigation actions, and report export all work. No additional core-workflow change was requested, and another core verification request is unnecessary. The learner's remaining question concerns the AI integration. Live workspace availability was checked and reports no configured provider, model, or key. The implemented adapter has controlled-response tests but no live-provider verification. Provider selection has been requested so this outstanding integration step can be completed before overall readiness is closed.
 
 ## Code Tour and App Map
 
