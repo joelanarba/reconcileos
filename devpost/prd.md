@@ -241,9 +241,13 @@ PostgreSQL migration and integration verification, AWS hosting, authenticated pu
 
 Configurable provider import mappings, richer supported currencies, settlement timing rules, stronger audit protection, and authenticated collaboration may follow after the core workflow is proven. They are not acceptance criteria for this build.
 
+## Hosted Interface Revision
+
+The October 25 hosted-interface revision adds a public landing page and a no-account synthetic demo. Visitors can follow actual sample results into evidence, import provenance, saved AI hypotheses, and report downloads. Demo records are held separately from the operator workspace and cannot be changed by visitors. Sign-in uses an application form backed by Cognito; additional verification falls back to the secure provider flow. Existing authenticated import, review, and AI workflows remain available. This revision directly addresses learner feedback about the original sign-in entry point and visual quality.
+
 ## Non-Goals
 
-Money movement, transfer initiation, bank connectivity, fraud adjudication, automatic AI financial decisions, public unauthenticated financial access, Docker repair, billing, and distributed infrastructure are outside this proof of concept.
+Money movement, transfer initiation, bank connectivity, fraud adjudication, automatic AI financial decisions, public unauthenticated operator data access, Docker repair, billing, and distributed infrastructure are outside this proof of concept.
 
 ## Open Questions
 

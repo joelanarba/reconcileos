@@ -157,6 +157,29 @@ class Deployment:
         save_local(LOCAL / "outputs.json", self.outputs())
         print("The preserved stack was repaired without deleting its successful resources.")
 
+    def update_interface(self):
+        current = self.stack(self.args.stack)
+        if not current or current["StackStatus"] not in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
+            raise RuntimeError("A ready owned stack is required before updating the public interface.")
+        template = (ROOT / "deploy" / "aws.yaml").read_text(encoding="utf-8")
+        # Review a change set before executing: this interface revision must not replace any resource.
+        name = "interface-" + str(time.time_ns())
+        self.cf.create_change_set(StackName=self.args.stack, ChangeSetName=name, ChangeSetType="UPDATE", TemplateBody=template,
+            Parameters=[{"ParameterKey": item["ParameterKey"], "UsePreviousValue": True} for item in current["Parameters"]],
+            Capabilities=["CAPABILITY_IAM"], Tags=current.get("Tags", []))
+        self.cf.get_waiter("change_set_create_complete").wait(StackName=self.args.stack, ChangeSetName=name)
+        changes = self.cf.describe_change_set(StackName=self.args.stack, ChangeSetName=name)
+        allowed = {"AppClient", "ResponseHeaders", "PublicDemoRoute", "MaintenanceRole", "MaintenanceFunction"}
+        for item in changes["Changes"]:
+            resource = item["ResourceChange"]
+            if resource["LogicalResourceId"] not in allowed or resource.get("Replacement", "False") != "False" or resource["Action"] not in ("Add", "Modify"):
+                raise RuntimeError("The interface change set contains an unexpected resource change; it was not executed.")
+        print(json.dumps({"reviewed_interface_changes": [item["ResourceChange"]["LogicalResourceId"] for item in changes["Changes"]]}), flush=True)
+        self.guard()
+        self.cf.execute_change_set(StackName=self.args.stack, ChangeSetName=name)
+        self.wait_stack(self.args.stack, "UPDATE_COMPLETE")
+        save_local(LOCAL / "outputs.json", self.outputs())
+
     def maintenance(self, action):
         self.guard()
         payload = {"action": action}
@@ -258,7 +281,7 @@ class Deployment:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("status", "provision", "update-backend", "repair-infrastructure", "initialize", "verify-postgres", "connectivity", "configure-ai", "create-operator", "publish", "smoke"))
+    parser.add_argument("action", choices=("status", "provision", "update-backend", "update-interface", "repair-infrastructure", "initialize", "initialize-demo", "verify-postgres", "connectivity", "configure-ai", "create-operator", "publish", "smoke"))
     parser.add_argument("--profile", required=True)
     parser.add_argument("--account-id", required=True)
     parser.add_argument("--region", required=True)
@@ -271,7 +294,7 @@ def main():
     if args.action == "status":
         stack = deployment.stack(args.stack)
         print(json.dumps({"account": args.account_id, "profile": args.profile, "region": args.region, "stack_status": stack["StackStatus"] if stack else "not_created"}))
-    elif args.action in ("initialize", "verify-postgres", "connectivity"):
+    elif args.action in ("initialize", "initialize-demo", "verify-postgres", "connectivity"):
         deployment.maintenance(args.action.replace("-", "_"))
     else:
         getattr(deployment, args.action.replace("-", "_"))()

@@ -36,7 +36,8 @@ def handler(event, context):
         # Refuse accidental deployment of the unauthenticated local mode.
         if os.environ.get("APP_MODE") != "aws":
             raise RuntimeError("The AWS handler requires hosted mode.")
-        os.environ["DATABASE_URL"] = database_url(read_secret(os.environ["APP_DB_SECRET_ARN"]))
+        credentials = read_secret(os.environ["APP_DB_SECRET_ARN"])
+        os.environ["DATABASE_URL"] = database_url(credentials)
         ai = read_secret(os.environ["AI_SECRET_ARN"])
         if ai.get("api_key"):
             os.environ["LLM_API_KEY"] = ai["api_key"]
@@ -44,6 +45,9 @@ def handler(event, context):
             os.environ["LLM_MODEL"] = ai["model"]
             os.environ["LLM_RESPONSE_FORMAT"] = "json_schema"
         from mangum import Mangum
-        from app.main import app
-        _adapter = Mangum(app)
+        from app.main import app, create_app
+        from app.core.config import Settings
+        from app.public_demo import DEMO_DATABASE, PublicDemo
+        demo_settings = Settings(database_url=database_url(credentials, DEMO_DATABASE), fee_rules_path=str(ROOT / "sample-data" / "fee-rules.json"))
+        _adapter = Mangum(PublicDemo(app, create_app(demo_settings)))
     return _adapter(event, context)

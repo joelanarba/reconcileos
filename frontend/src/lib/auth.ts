@@ -12,7 +12,8 @@ function settings() {
   const url = new URL(domain)
   if (url.protocol !== 'https:' || !/^[a-z0-9-]+\.auth\.[a-z0-9-]+\.amazoncognito\.com$/.test(url.hostname) || url.username || url.password || url.search || url.hash || url.pathname !== '/' || !/^[a-z0-9]{1,128}$/.test(clientId)) throw new Error('The hosted sign-in configuration is invalid.')
   if (window.location.protocol !== 'https:') throw new Error('Hosted sign-in requires HTTPS.')
-  return { domain: url.origin, clientId, redirectUri: window.location.origin + '/auth/callback' }
+  const region = url.hostname.split('.auth.')[1].split('.amazoncognito.com')[0]
+  return { domain: url.origin, clientId, endpoint: `https://cognito-idp.${region}.amazonaws.com/`, redirectUri: window.location.origin + '/auth/callback' }
 }
 
 function encode(bytes: Uint8Array) {
@@ -36,7 +37,32 @@ export function invalidateSession() {
 
 function safeReturnPath(value: string) {
   const url = new URL(value, window.location.origin)
-  return url.origin === window.location.origin && url.pathname !== '/auth/callback' ? url.pathname + url.search : '/dashboard'
+  return url.origin === window.location.origin && /^\/(dashboard|imports|reconciliation|investigations|reports)(\/|$)/.test(url.pathname) ? url.pathname + url.search : '/dashboard'
+}
+
+export class VerificationRequired extends Error {}
+
+function saveSession(token: unknown, type: unknown, expires: unknown) {
+  if (typeof token !== 'string' || !token || token.length > 16384 || String(type).toLowerCase() !== 'bearer' || !Number.isInteger(expires) || Number(expires) < 60 || Number(expires) > 86400) throw new Error('The identity provider returned an invalid session.')
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: token, expires_at: Date.now() + Number(expires) * 1000 }))
+  window.dispatchEvent(new Event(AUTH_EVENT))
+}
+
+export async function signInWithPassword(username: string, password: string) {
+  const configuration = settings()
+  if (!username.trim() || username.length > 128 || !password || password.length > 256) throw new Error('Enter your username and password.')
+  let response: Response
+  try {
+    response = await fetch(configuration.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-amz-json-1.1', 'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth' }, body: JSON.stringify({ AuthFlow: 'USER_PASSWORD_AUTH', ClientId: configuration.clientId, AuthParameters: { USERNAME: username.trim(), PASSWORD: password } }), signal: AbortSignal.timeout(15000) })
+  } catch { throw new Error('Sign-in is unavailable. Check your connection and try again.') }
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    if (String(result.__type).includes('TooManyRequests') || String(result.__type).includes('LimitExceeded')) throw new Error('Too many sign-in attempts. Wait a moment and try again.')
+    throw new Error('Sign-in failed. Check your username and password, then try again.')
+  }
+  if (result.ChallengeName) throw new VerificationRequired('Your account requires an additional verification step. Continue with the secure provider sign-in.')
+  const auth = result.AuthenticationResult || {}
+  saveSession(auth.AccessToken, auth.TokenType, auth.ExpiresIn)
 }
 
 export async function startSignIn() {
@@ -58,9 +84,7 @@ async function exchangeCode(search: string) {
   const response = await fetch(configuration.domain + '/oauth2/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: configuration.clientId, redirect_uri: configuration.redirectUri, code: query.get('code')!, code_verifier: pending.verifier }), signal: AbortSignal.timeout(15000) })
   if (!response.ok) throw new Error('Sign-in could not be completed. Start sign-in again.')
   const result = await response.json()
-  if (typeof result.access_token !== 'string' || !result.access_token || result.access_token.length > 16384 || String(result.token_type).toLowerCase() !== 'bearer' || !Number.isInteger(result.expires_in) || result.expires_in < 60 || result.expires_in > 86400) throw new Error('The identity provider returned an invalid session.')
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: result.access_token, expires_at: Date.now() + result.expires_in * 1000 }))
-  window.dispatchEvent(new Event(AUTH_EVENT))
+  saveSession(result.access_token, result.token_type, result.expires_in)
   return safeReturnPath(pending.return_path)
 }
 

@@ -1,9 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckCheck, LockKeyhole } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AUTH_EVENT, finishSignIn, hostedAuth, session, startSignIn } from '../../lib/auth'
-import { ErrorMessage, Loading } from '../../components/common'
+import { AUTH_EVENT, finishSignIn, hostedAuth, session, signInWithPassword, startSignIn, VerificationRequired } from '../../lib/auth'
+import { LoginPage } from '../public/LoginPage'
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const location = useLocation()
@@ -12,6 +11,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [current, setCurrent] = useState(session)
   const [error, setError] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
+  const [verification, setVerification] = useState(false)
   useEffect(() => {
     if (!hostedAuth) return
     const update = () => { const value = session(); setCurrent(value); if (!value) queryClient.clear() }
@@ -24,7 +24,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
     setBusy(true)
     finishSignIn(location.search).then(path => { setCurrent(session()); navigate(path, { replace: true }) }).catch(setError).finally(() => setBusy(false))
   }, [location.pathname, location.search, navigate])
-  if (!hostedAuth) return children
-  if (current && location.pathname !== '/auth/callback') return children
-  return <main className="auth-screen"><section className="panel auth-panel"><div className="auth-brand"><CheckCheck size={24} /><strong>ReconcileOS</strong></div><h1>Sign in to your workspace</h1><p>Access is restricted to approved finance operators.</p><ErrorMessage error={error} />{busy ? <Loading /> : <button className="button primary" onClick={() => { setError(null); startSignIn().catch(setError) }}><LockKeyhole size={16} />Sign in with Amazon Cognito</button>}<p className="footnote">Your administrator must grant your account workspace access. Financial records are available after authentication.</p></section></main>
+  async function submit(username: string, password: string) {
+    setError(null); setBusy(true); setVerification(false)
+    try {
+      await signInWithPassword(username, password)
+      setCurrent(session())
+      if (location.pathname === '/login' || location.pathname === '/auth/callback') navigate('/dashboard', { replace: true })
+    } catch (failure) { setError(failure); setVerification(failure instanceof VerificationRequired) }
+    finally { setBusy(false) }
+  }
+  async function provider() { setError(null); try { await startSignIn() } catch (failure) { setError(failure) } }
+  if (!hostedAuth || current && location.pathname !== '/auth/callback') return children
+  return <LoginPage onSubmit={submit} onProviderSignIn={provider} busy={busy} error={error} verificationRequired={verification} />
 }

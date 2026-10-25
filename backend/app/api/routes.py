@@ -11,7 +11,7 @@ from app.core.config import PROVIDERS, WORKSPACE_ID
 from app.core.errors import AppError
 from app.core.fees import fee_configuration
 from app.core.money import PRECISION
-from app.models.entities import Discrepancy, ImportBatch, ReconciliationMatch, ReconciliationRun, Workspace
+from app.models.entities import Discrepancy, ImportBatch, Investigation, ReconciliationMatch, ReconciliationRun, Workspace
 from app.services.imports.csv_parser import TEMPLATES
 from app.services.imports.service import confirm_batch, preview_batch, remap_batch
 from app.schemas.imports import ImportOptions
@@ -98,7 +98,10 @@ def health(request: Request, session=Depends(get_session)):
 @router.get("/workspace")
 def workspace(request: Request, session=Depends(get_session)):
     data = entity_data(session.get(Workspace, WORKSPACE_ID))
-    return public(data | {"operator": request.state.actor, "mode": request.app.state.settings.app_mode, "currency_precision": PRECISION, "providers": PROVIDERS,
+    if getattr(request.app.state, "public_demo", False):
+        example = session.scalar(select(Investigation).where(Investigation.kind == "ai").order_by(Investigation.created_at.desc()))
+        data["demo"] = {"read_only": True, "ai_case_id": example.discrepancy_id if example else None}
+    return public(data | {"operator": request.state.actor, "mode": "demo" if getattr(request.app.state, "public_demo", False) else request.app.state.settings.app_mode, "currency_precision": PRECISION, "providers": PROVIDERS,
                           "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes, "max_import_rows": request.app.state.settings.max_import_rows,
                           "fee_configuration": fee_configuration(request.app.state.settings), "ai": availability(request.app.state.settings)})
 

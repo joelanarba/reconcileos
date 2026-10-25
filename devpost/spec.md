@@ -5,6 +5,12 @@ status: approved
 
 # ReconcileOS Technical Specification
 
+## Hosted Interface Revision, October 25
+
+The root route is public. The /demo subtree has an independent query cache and reads only /api/demo endpoints. An ASGI dispatcher rewrites these requests to a separate application instance with a distinct database. All demo mutations are denied before routing and again by authorization. On AWS, the fixed reconcileos_public_demo database is seeded privately through real imports and reconciliation, verified against the synthetic manifest, then granted SELECT-only access to the runtime role. The operator database is unchanged. API Gateway exposes GET /api/demo/{proxy+} without JWT authorization; operator routes retain JWT and group checks. One privately prepared, validated OpenAI hypothesis can be inspected publicly, with no public provider-request endpoint.
+
+Custom sign-in calls Cognito InitiateAuth with USER_PASSWORD_AUTH directly over HTTPS. Only bounded access tokens are stored for the tab; passwords and refresh tokens are not persisted. Challenge responses use the existing authorization-code/PKCE verification fallback. CloudFront CSP allows the configured Cognito endpoints. Workspace navigation, metrics, evidence screens, and mobile layout share the approved palette and use real API values.
+
 ## How This Works, In Plain Language
 
 The browser application sends CSV files to a Python service running on the same laptop. The service validates each file, keeps a preview, and writes financial records only when the operator confirms a valid import. Records and review history live in the local SQLite database and survive restart.

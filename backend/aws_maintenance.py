@@ -27,7 +27,7 @@ def connection(url, **kwargs):
 
 
 def handler(event, context):
-    if not isinstance(event, dict) or event.get("action") not in ("initialize", "verify_postgres", "connectivity"):
+    if not isinstance(event, dict) or event.get("action") not in ("initialize", "initialize_demo", "verify_postgres", "connectivity"):
         raise ValueError("Choose an explicitly supported maintenance action.")
     if event["action"] == "connectivity":
         # Bounded, unauthenticated connectivity only. No financial evidence leaves AWS.
@@ -37,6 +37,28 @@ def handler(event, context):
     admin = read_secret(os.environ["MASTER_DB_SECRET_ARN"])
     app = read_secret(os.environ["APP_DB_SECRET_ARN"])
     url = database_url(admin)
+    if event["action"] == "initialize_demo":
+        from app.public_demo import DEMO_DATABASE
+        with connection(database_url(admin, "postgres"), autocommit=True) as conn:
+            if not conn.execute("SELECT 1 FROM pg_database WHERE datname = %s", (DEMO_DATABASE,)).fetchone():
+                conn.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(DEMO_DATABASE)))
+        demo_url = database_url(admin, DEMO_DATABASE)
+        migrate(demo_url)
+        os.environ["DATABASE_URL"] = demo_url
+        from app.services.demo import prepare_ai_example, seed_demo
+        result = seed_demo(demo_url, ROOT / "sample-data")
+        ai_result = prepare_ai_example(demo_url, ROOT / "sample-data", read_secret(os.environ["AI_SECRET_ARN"]))
+        with connection(demo_url) as conn:
+            role = sql.Identifier(app["username"])
+            conn.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(sql.Identifier(DEMO_DATABASE), role))
+            conn.execute(sql.SQL("GRANT USAGE ON SCHEMA public TO {}").format(role))
+            conn.execute(sql.SQL("REVOKE ALL ON ALL TABLES IN SCHEMA public FROM {}").format(role))
+            conn.execute(sql.SQL("GRANT SELECT ON ALL TABLES IN SCHEMA public TO {}").format(role))
+            conn.execute(sql.SQL("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {}").format(role))
+        with connection(database_url(app, DEMO_DATABASE)) as conn:
+            assert not conn.execute("SELECT has_table_privilege(current_user, 'orders', 'INSERT')").fetchone()[0]
+            assert conn.execute("SELECT count(*) FROM orders").fetchone()[0] == 100
+        return {"database": DEMO_DATABASE, "read_only_role_verified": True, **result, **ai_result}
     if event["action"] == "initialize":
         migrate(url)
         with connection(url) as conn:

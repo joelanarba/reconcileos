@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_ROOT / ".env", extra="ignore", hide_input_in_errors=True)
 
     database_url: str = "sqlite:///./data/reconcileos.db"
+    public_demo_database_url: str | None = None
     app_mode: Literal["local", "aws"] = "local"
     local_operator: str = Field(default="Local operator", min_length=3, max_length=80)
     cors_origins: list[str] = ["http://127.0.0.1:5173", "http://localhost:5173"]

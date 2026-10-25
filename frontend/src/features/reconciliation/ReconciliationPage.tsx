@@ -7,7 +7,7 @@ import type { Discrepancy, Match, Page, Run, Workspace } from '../../types/api'
 import { Badge, displayTime, EmptyState, ErrorMessage, Loading, Money, Pagination } from '../../components/common'
 import { EvidenceDialog } from '../../components/EvidenceDialog'
 
-export function ReconciliationPage({ workspace }: { workspace?: Workspace }) {
+export function ReconciliationPage({ workspace, demo = false }: { workspace?: Workspace; demo?: boolean }) {
   const queryClient = useQueryClient()
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
@@ -32,12 +32,12 @@ export function ReconciliationPage({ workspace }: { workspace?: Workspace }) {
   function changeRun(id: string) { setParams({ run: id }); setPage(1); setSearch(''); setType(''); setStatus('') }
 
   return <>
-    <div className="page-heading"><div><div className="eyebrow">FINANCIAL CONTROLS</div><h1>Reconciliation</h1><p>Compare imported records and follow every decision to its source.</p></div><button className="button primary" onClick={() => start.mutate()} disabled={start.isPending || !workspace?.input_revision}><Play size={15} />{start.isPending ? 'Reconciling...' : 'Start reconciliation'}</button></div>
+    <div className="page-heading"><div><div className="eyebrow">FINANCIAL CONTROLS</div><h1>Reconciliation</h1><p>{demo ? 'Recorded results calculated from the imported synthetic files. Explore cases and matching evidence.' : 'Compare imported records and follow every decision to its source.'}</p></div>{!demo && <button className="button primary" onClick={() => start.mutate()} disabled={start.isPending || !workspace?.input_revision}><Play size={15} />{start.isPending ? 'Reconciling...' : 'Start reconciliation'}</button>}</div>
     <ErrorMessage error={start.error || runs.error || run.error} />
     <div className="scope-note"><CheckCircle2 size={16} /><span>Exact order, payment, and settlement checks. Zero amount tolerance. Repeated transaction references require review.</span></div>
     {run.data?.is_stale && <div className="alert warning"><RefreshCw size={17} /><span>Inputs or engine rules have changed since this run. Start reconciliation to include them.</span></div>}
     {runs.isLoading && <Loading />}
-    {!runId && !runs.isLoading && <section className="panel"><EmptyState title="No reconciliation runs yet">Confirm your source files, then start a run to calculate matches and review cases.</EmptyState><div className="empty-action"><Link to="/imports" className="button secondary">Open imports<ArrowRight size={15} /></Link></div></section>}
+    {!runId && !runs.isLoading && <section className="panel"><EmptyState title="No reconciliation runs yet">Confirm your source files, then start a run to calculate matches and review cases.</EmptyState><div className="empty-action"><Link to={demo ? '/demo/imports' : '/imports'} className="button secondary">Open imports<ArrowRight size={15} /></Link></div></section>}
     {runId && <>
       <section className="panel run-selector"><div><label htmlFor="run-select">Reconciliation run</label><select id="run-select" value={runs.data?.items.some(item => item.id === runId) ? runId : ''} onChange={event => changeRun(event.target.value)}>{!runs.data?.items.some(item => item.id === runId) && <option value="">Selected run {runId.slice(0, 8)}</option>}{runs.data?.items.map(item => <option value={item.id} key={item.id}>{displayTime(item.started_at)} / {item.id.slice(0, 8)} / {item.status}</option>)}</select></div>{run.data && <div className="run-meta"><Badge value={run.data.status} /><span>Input revision {run.data.input_revision}</span><code title={run.data.snapshot_hash}>Snapshot {run.data.snapshot_hash.slice(0, 12)}</code></div>}</section>
       {runs.data && runs.data.total > 25 && <Pagination page={runPage} total={runs.data.total} onChange={setRunPage} />}

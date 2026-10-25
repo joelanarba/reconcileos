@@ -11,22 +11,18 @@ test('hosted Cognito sign-in, synthetic imports, PostgreSQL reconciliation, revi
   const denied = await page.request.get('/api/workspace')
   expect(denied.status()).toBe(401)
   await page.goto('/imports')
-  await page.getByRole('button', { name: 'Sign in with Amazon Cognito' }).click()
-  await page.waitForURL(url => url.origin === outputs.CognitoDomain)
-  await page.locator('input[name="password"]:visible').first().waitFor({ state: 'visible' })
-  // Do not include password values in Playwright action logs or persisted traces.
+  await expect(page.getByRole('heading', { name: 'Sign in to ReconcileOS', exact: true })).toBeVisible()
+  // Use the native setter so React receives input without persisting credential values in action logs.
   await page.evaluate(({ username, password }) => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
     for (const [name, value] of Object.entries({ username, password })) {
-      const input = Array.from(document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)).find(item => item.getBoundingClientRect().width > 0 && getComputedStyle(item).visibility === 'visible')
-      if (!input) throw new Error('The managed login form is unavailable.')
+      const input = document.querySelector<HTMLInputElement>(`input[name="${name}"]`)!
       if (name === 'password') input.setAttribute('aria-hidden', 'true')
-      input.value = value
+      setter.call(input, value)
       input.dispatchEvent(new Event('input', { bubbles: true }))
-      input.dispatchEvent(new Event('change', { bubbles: true }))
     }
   }, { username: credentials.username, password: credentials.password })
-  await page.getByRole('button', { name: 'submit', exact: true }).click()
-  await page.waitForURL(url => url.origin === outputs.AppUrl && url.pathname !== '/auth/callback')
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Imports', exact: true })).toBeVisible()
 
   async function api(pathname: string) {
@@ -111,7 +107,7 @@ test('hosted Cognito sign-in, synthetic imports, PostgreSQL reconciliation, revi
   expect(await readFile((await saved.path())!, 'utf8')).toContain('matched_order_value,GHS,12550,125.50')
   await page.screenshot({ path: '../deploy/.local/hosted-reports.png', fullPage: true })
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Sign in with Amazon Cognito' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in to ReconcileOS', exact: true })).toBeVisible()
   expect(await page.evaluate(() => sessionStorage.getItem('reconcileos.auth.session') === null)).toBe(true)
   expect(errors).toEqual([])
 })

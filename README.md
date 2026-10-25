@@ -4,7 +4,7 @@ ReconcileOS helps finance officers compare order, payment, and settlement export
 
 This proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and durable persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are implemented. Optional OpenAI investigation assistance returns validated hypotheses that remain subject to human review.
 
-The authenticated [AWS demonstration](https://dbedhac79djfv.cloudfront.net) runs on private PostgreSQL. It contains four clearly labeled synthetic records. Access requires an approved Cognito operator; credentials are not published. The complete hosted browser journey, including one consented synthetic OpenAI investigation, passed on October 25, 2026. Local Windows startup remains available below.
+Open [ReconcileOS](https://dbedhac79djfv.cloudfront.net) for the public introduction, then choose [Try the demo](https://dbedhac79djfv.cloudfront.net/demo). The read-only demo uses a separate synthetic database with 100 orders, 100 payment records, and 90 settlement records. Visitors can inspect computed matches, source evidence, a saved OpenAI hypothesis when available, and download reports without an account. Approved operators use the site's sign-in form for imports, review decisions, and new AI requests. Their workspace stays protected by Cognito and API Gateway. Local Windows startup remains available below.
 
 ## Current Workflow
 
@@ -42,6 +42,8 @@ py -m venv .venv
 Copy-Item .env.example .env
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe prepare_demo.py
+$env:PUBLIC_DEMO_DATABASE_URL = 'sqlite:///./data/public-demo.db'
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -57,6 +59,8 @@ npm.cmd run dev
 ```
 
 Open http://127.0.0.1:5173. The API is at http://127.0.0.1:8000/api and its interactive documentation is at http://127.0.0.1:8000/docs. Both services bind to loopback. npm.cmd avoids PowerShell blocking npm.ps1. The frontend uses a strict port; resolve a port conflict rather than silently using an origin absent from CORS configuration.
+
+The root page introduces the product. Choose Try the demo for the separate read-only sample, or Local operator workspace in the footer to work with your own local imports. prepare_demo.py preserves an existing sample database; it never clears the operator store. Its optional database setting can also be saved in the ignored backend/.env. Local preparation does not call OpenAI or create a saved AI response.
 
 DATABASE_URL defaults to sqlite:///./data/reconcileos.db, resolved relative to backend. The resulting file is backend/data/reconcileos.db. Configure the browser API root with VITE_API_BASE_URL in frontend/.env. Secret environment files, database files, dependencies, and personal learner context are ignored by Git.
 
@@ -102,7 +106,7 @@ OpenAI is the selected investigation provider. The prepared backend configuratio
 
 The operator explicitly consents before sending a selected case's evidence. The adapter sends at most 20 relevant records and 16 KiB, treats source text as untrusted, and validates the case, schema, and every returned supporting record ID. Monetary evidence includes explicit precision, minor units, exact decimal values, and formatted displays. Only a validated hypothesis is saved. Provider failures preserve manual work and deterministic results. AI cannot create transactions, change amounts, approve matches, resolve cases, or determine financial truth.
 
-Controlled HTTP tests pass for the generic and OpenAI request paths. Two real OpenAI requests were checked against a synthetic scenario. The first exposed an amount-unit wording error; explicit monetary formatting corrected it, and the follow-up response correctly used GHS 125.50. Saved evidence IDs, unchanged financial summaries, restart persistence, and browser rendering were verified. The complete backend suite passes 144 tests. This is not a general model-accuracy claim. From backend, run .\.venv\Scripts\python.exe verify_ai.py --confirm-synthetic-request only when authorizing another bounded request using a separate synthetic database. See [AI configuration](docs/ai-configuration.md) for setup, safeguards, primary documentation, and actual verification status.
+Controlled HTTP tests pass for the generic and OpenAI request paths. Two real OpenAI requests were checked against a synthetic scenario. The first exposed an amount-unit wording error; explicit monetary formatting corrected it, and the follow-up response correctly used GHS 125.50. Saved evidence IDs, unchanged financial summaries, restart persistence, and browser rendering were verified. The current backend suite passes 185 tests. This is not a general model-accuracy claim. From backend, run .\.venv\Scripts\python.exe verify_ai.py --confirm-synthetic-request only when authorizing another bounded request using a separate synthetic database. See [AI configuration](docs/ai-configuration.md) for setup, safeguards, primary documentation, and actual verification status.
 
 ## Architecture and Database Portability
 

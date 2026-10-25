@@ -72,3 +72,36 @@ it('rejects a cross-origin hosted API configuration before sending tokens', asyn
   vi.stubEnv('VITE_API_BASE_URL', 'https://other.example/api')
   await expect(import('../src/lib/api')).rejects.toThrow('same-origin')
 })
+
+it('signs in through Cognito directly and never stores a password or refresh token', async () => {
+  const fetchMock = vi.fn(async (url: string, options: RequestInit) => {
+    expect(url).toBe('https://cognito-idp.us-east-1.amazonaws.com/')
+    const body = JSON.parse(options.body as string)
+    expect(body.AuthFlow).toBe('USER_PASSWORD_AUTH')
+    expect(body.AuthParameters).toEqual({ USERNAME: 'operator', PASSWORD: 'synthetic-password' })
+    return new Response(JSON.stringify({ AuthenticationResult: { AccessToken: 'synthetic-access-token', TokenType: 'Bearer', ExpiresIn: 900, RefreshToken: 'must-not-be-stored' } }))
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  const auth = await import('../src/lib/auth')
+  await auth.signInWithPassword('operator', 'synthetic-password')
+  expect(auth.session()?.access_token).toBe('synthetic-access-token')
+  expect(sessionStorage.getItem(sessionKey)).not.toMatch(/synthetic-password|must-not-be-stored/)
+})
+
+it('requires the provider verification flow when Cognito requests a challenge', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ChallengeName: 'NEW_PASSWORD_REQUIRED' }))))
+  const auth = await import('../src/lib/auth')
+  await expect(auth.signInWithPassword('operator', 'synthetic-password')).rejects.toBeInstanceOf(auth.VerificationRequired)
+  expect(auth.session()).toBeNull()
+})
+
+it('keeps public demo requests anonymous even with a signed-in operator session', async () => {
+  sessionStorage.setItem(sessionKey, JSON.stringify({ access_token: 'synthetic-access-token', expires_at: Date.now() + 900000 }))
+  vi.stubGlobal('fetch', vi.fn(async (url: string, options: RequestInit) => {
+    expect(url).toBe('/api/demo/dashboard')
+    expect(new Headers(options.headers).has('Authorization')).toBe(false)
+    return new Response('{}')
+  }))
+  const { api } = await import('../src/lib/api')
+  await api('/demo/dashboard')
+})

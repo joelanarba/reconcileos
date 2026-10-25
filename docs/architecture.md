@@ -1,5 +1,11 @@
 # Current Architecture
 
+## Public Demonstration Boundary
+
+The landing page and /demo routes are public. Demo requests use /api/demo, a separate FastAPI instance and a separate synthetic database. The dispatcher and authorization dependency reject writes; AWS also grants the runtime user SELECT-only access to demo tables. Operator routes retain JWT authorization and use their original database. Independent frontend query caches prevent operator data appearing in demo views. Public visitors can inspect a saved, actual AI hypothesis but cannot submit provider requests. Seed imports, reconciliation, and the example note use the same application services as normal operations.
+
+The site's custom sign-in form sends credentials directly to Cognito through InitiateAuth over HTTPS. Additional verification uses the retained code/PKCE provider flow. The browser retains only a short-lived access token for its tab. No password, refresh token, or API key is persisted in the frontend.
+
 This document describes implemented local and AWS import, reconciliation, dashboard, review, reporting, and optional AI behavior. The approved design and subsequent hosting request are recorded in devpost/spec.md.
 
 ## Record Flow
@@ -45,6 +51,6 @@ Services bind to loopback by default, with explicit browser origins and trusted 
 
 Imported rows and snapshots have no edit/delete API. Audit events have no mutation route, and ORM guards reject ordinary object updates or deletes. Direct database administrators can still modify local files; no cryptographic immutability is claimed.
 
-The AWS demonstration uses CloudFront/private S3, Cognito code/PKCE sign-in, a Gateway JWT authorizer, and Lambda with private encrypted PostgreSQL. The runtime and maintenance functions share the same application modules. Secrets stay in Secrets Manager; native Windows builds package Linux wheels and the RDS public CA bundle. The private maintenance function applies migrations and verifies a separate synthetic database. The actual hosted browser journey and one OpenAI investigation passed; unauthenticated and altered-signature requests were rejected. See [hosting verification](production-readiness.md) for the exact evidence and operational limits.
+The AWS demonstration uses CloudFront/private S3, Cognito password sign-in with code/PKCE verification fallback, a Gateway JWT authorizer for operator routes, and Lambda with private encrypted PostgreSQL. The runtime and maintenance functions share the same application modules. Secrets stay in Secrets Manager; native Windows builds package Linux wheels and the RDS public CA bundle. The private maintenance function applies migrations and verifies a separate synthetic database. Actual hosted browser journeys and OpenAI investigations passed; unauthenticated operator requests and altered-signature requests were rejected. See [hosting verification](production-readiness.md) for the exact evidence and operational limits.
 
 AI input includes explicit currency precision and exact decimal/display amounts from the shared integer formatter. An initial local live amount-unit error prompted that correction; corrected local and hosted responses were inspected. Neither the limited synthetic checks nor structured validation establishes general model accuracy. Hypotheses still require human review.

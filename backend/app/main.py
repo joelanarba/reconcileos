@@ -69,3 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 app = create_app()
+if app.state.settings.app_mode == "local" and app.state.settings.public_demo_database_url:
+    from app.public_demo import PublicDemo
+    demo_settings = app.state.settings.model_copy(update={"database_url": app.state.settings.public_demo_database_url})
+    app = PublicDemo(app, create_app(demo_settings))

@@ -1,6 +1,6 @@
 # Current Limitations
 
-This is a proof of concept with local and authenticated AWS demonstration modes. Final learner review and submission work remain tracked in devpost/checklist.md.
+This is a proof of concept with a public read-only synthetic demo, local mode, and an authenticated AWS operator workspace. Final learner review and submission work remain tracked in devpost/checklist.md.
 
 - All three source types, settlement matching, fee checks, dashboard, human review, notes, audit history, and CSV reports are implemented. AI has controlled-response tests and real synthetic OpenAI checks locally and on AWS. Local credentials stay in an ignored environment file; hosted credentials stay server-side in Secrets Manager. Limited synthetic scenarios do not establish general explanation accuracy.
 - The complete synthetic demonstration contains 100 orders, 100 payment rows, and 90 settlement rows. Its scenario-defined manifest is tested independently through the actual API.
@@ -16,4 +16,4 @@ This is a proof of concept with local and authenticated AWS demonstration modes.
 - RDS PostgreSQL 18.3 migrations, the independent synthetic oracle, review/audit, export, and uniqueness checks passed. The hosted browser workflow also passed. Other PostgreSQL configurations, production concurrency/capacity, backup restoration, and historical SQLite transfer are unverified.
 - The current backend TestClient emits a Starlette deprecation warning while using HTTPX. Tests pass with that warning recorded.
 
-The hosted workspace contains four synthetic demonstration records and no assumed real provider fee contract. The larger 100/100/90 fixture is retained in a dedicated verification database with explicitly synthetic fee rules. Existing SQLite records were not transferred or reset. Hosted provider-failure and Excel scenarios have not been repeated; local coverage does not establish every cloud execution path. Changing DATABASE_URL does not transfer existing records.
+The protected hosted workspace contains four synthetic demonstration records and no assumed real provider fee contract. The public demo uses a separate 100/100/90-record database with explicitly synthetic fee rules. Visitors cannot import, change reviews, or make new AI requests. A separately prepared provider hypothesis is an example, not a fresh response to a visitor action. The dedicated verification database is also preserved. Existing SQLite records were not transferred or reset. Hosted provider-failure and Excel scenarios have not been repeated; local coverage does not establish every cloud execution path. Changing DATABASE_URL does not transfer existing records.

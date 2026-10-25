@@ -6,6 +6,7 @@ export type Workspace = {
   available_sources: SourceType[]; rule_scope: string; currency_precision: Record<string, number>
   max_upload_bytes?: number
   max_import_rows?: number
+  demo?: { read_only: boolean; ai_case_id: string | null }
   fee_configuration?: FeeConfiguration
   ai?: { available: boolean; provider: string | null; model: string | null; message: string }
 }

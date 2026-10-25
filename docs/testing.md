@@ -1,6 +1,18 @@
 # Verification Record
 
-Latest checkpoint, October 25, 2026: 176 backend tests, 19 frontend tests, production build, real RDS PostgreSQL migration/oracle checks, live authenticated API checks, and the complete hosted Edge journey including one OpenAI investigation passed. Historical sections record earlier checkpoints and their limits at those times. Current AWS evidence is detailed at the end.
+Latest checkpoint, October 25, 2026: 185 backend tests, 22 frontend tests, production build, four local browser checks, and three live hosted browser checks passed. The hosted checks cover the new public landing/demo, mobile navigation, and custom Cognito sign-in with the existing financial workflow. The separate public PostgreSQL demo matches the 100/100/90-record oracle, has verified SELECT-only runtime permissions, and contains one actual saved OpenAI hypothesis. Historical sections record earlier checkpoints and their limits at those times.
+
+## Public Interface Verification
+
+Learner feedback led to a public landing page, no-account synthetic demo, custom sign-in, and a redesigned workspace. Nine new backend checks exercised real migrated databases for demo isolation, write denial, oracle results, source evidence, report export, idempotent preparation, and refusal to reuse the operator database. The full suite passed 185 tests; the recorded TestClient deprecation warning remains. The frontend suite passed 22 tests, including direct Cognito authentication without stored passwords/refresh tokens, challenge fallback, and anonymous public requests even when an operator session exists. The production build and CloudFormation lint passed.
+
+Four real-service local Edge tests passed after updating the old mobile navigation selector to open the new menu. They cover ordinary CSV mapping/correction, real XLSX/XLS acceptance, the full reconciliation/review/export workflow, and the offline source guide. Local demo preparation also ran successfully using the documented Windows command and a separate ignored database.
+
+AWS applied an inspected change set limited to the Cognito client, response security policy, public GET route, and maintenance secret access. No resource replacement occurred. One backend deployment attempt timed out connecting to STS before mutation; a verified retry succeeded. The deployed archive's 37 application/runtime Python files matched current source byte-for-byte. Private preparation imported 100 orders, 100 payments, and 90 settlements into reconcileos_public_demo, matched the independent oracle, saved one real validated OpenAI hypothesis, and verified that the runtime user cannot INSERT into the order table. Primary operator and verification databases were preserved.
+
+After publishing, three real hosted Edge tests passed in 1.3 minutes. The no-account journey covered landing summary values, unauthenticated operator denial, demo mutation denial, match/case evidence, import provenance, the saved AI explanation, CSV download, and sign-in navigation. The mobile check exercised landing, the demo menu, and custom sign-in without document overflow. The authenticated check used the custom form with real Cognito, then verified the existing three-source import, manifest results, review/audit, persisted history, export, reload, and sign-out. It did not request another operator AI response; the public example was prepared separately through the actual provider. No browser script errors occurred. Actual desktop and mobile screenshots were inspected. Credentials, traces, and test screenshots remain private and ignored.
+
+A follow-up mobile assertion waits for actual case rows before checking overflow and capturing the screen. Its first navigation timed out before the page loaded; the retry passed in 17.5 seconds with populated cases. This network failure is separate from the successful application checks.
 
 ## Executed Before Import Feedback
 

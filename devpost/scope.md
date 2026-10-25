@@ -72,3 +72,5 @@ AI assistance works when a compatible provider is configured. Missing credential
 This document distills the learner's supplied master brief. The learner approved the displayed scope by responding "proceed". The scope is broader than the curriculum's usual small experiment, so implementation must follow the supplied priority order and preserve the complete core workflow.
 
 The learner's first hands-on feedback explicitly requested ordinary CSV and Excel acceptance, flexible column names, and less import preparation. That instruction authorizes the import-format and mapping expansion above. Exact monetary validation and evidence preservation remain required.
+
+On October 25, the learner requested a proper landing page, easier judge access, and a stronger interface after trying the hosted link. This authorizes a public introduction, a separate read-only synthetic demonstration, custom Cognito sign-in, and a coherent workspace redesign. Real operator records remain private. Public demo access does not enable uploads, review writes, or new provider requests.

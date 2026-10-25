@@ -158,7 +158,7 @@ Resources:
           StrictTransportSecurity: {AccessControlMaxAgeSec: 31536000, IncludeSubdomains: true, Override: true}
           ContentSecurityPolicy:
             Override: true
-            ContentSecurityPolicy: !Sub "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com"
+            ContentSecurityPolicy: !Sub "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com https://cognito-idp.${AWS::Region}.amazonaws.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com"
   Api:
     Type: AWS::ApiGatewayV2::Api
     Properties: {Name: !Sub '${AWS::StackName}-api', ProtocolType: HTTP}
@@ -263,7 +263,7 @@ Resources:
       SupportedIdentityProviders: [COGNITO]
       CallbackURLs: [!Sub 'https://${Distribution.DomainName}/auth/callback']
       LogoutURLs: [!Sub 'https://${Distribution.DomainName}/login']
-      ExplicitAuthFlows: [ALLOW_ADMIN_USER_PASSWORD_AUTH, ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      ExplicitAuthFlows: [ALLOW_USER_PASSWORD_AUTH, ALLOW_ADMIN_USER_PASSWORD_AUTH, ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
       PreventUserExistenceErrors: ENABLED
       EnableTokenRevocation: true
       AccessTokenValidity: 15
@@ -299,7 +299,7 @@ Resources:
         - PolicyName: ReadMigrationSecrets
           PolicyDocument:
             Version: '2012-10-17'
-            Statement: [{Effect: Allow, Action: secretsmanager:GetSecretValue, Resource: [!Ref AppSecret, !GetAtt Database.MasterUserSecret.SecretArn]}]
+            Statement: [{Effect: Allow, Action: secretsmanager:GetSecretValue, Resource: [!Ref AppSecret, !Ref AISecret, !GetAtt Database.MasterUserSecret.SecretArn]}]
   AppFunction:
     Type: AWS::Lambda::Function
     DependsOn: [OutboundIPv6, AssociateA, AssociateB]
@@ -348,6 +348,7 @@ Resources:
           DB_NAME: reconcileos
           MASTER_DB_SECRET_ARN: !GetAtt Database.MasterUserSecret.SecretArn
           APP_DB_SECRET_ARN: !Ref AppSecret
+          AI_SECRET_ARN: !Ref AISecret
   AppLogs:
     Type: AWS::Logs::LogGroup
     Properties: {LogGroupName: !Sub '/aws/lambda/${AppFunction}', RetentionInDays: 7}
@@ -369,6 +370,9 @@ Resources:
   HealthRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties: {ApiId: !Ref Api, RouteKey: 'GET /api/health', AuthorizationType: NONE, Target: !Join ['/', [integrations, !Ref Integration]]}
+  PublicDemoRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: {ApiId: !Ref Api, RouteKey: 'GET /api/demo/{proxy+}', AuthorizationType: NONE, Target: !Join ['/', [integrations, !Ref Integration]]}
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:

@@ -14,6 +14,11 @@ REQUIRED_SCOPE = "aws.cognito.signin.user.admin"
 def authorize_operator(request: Request):
     """Trust only claims injected by the configured API Gateway JWT authorizer."""
     settings = request.app.state.settings
+    if getattr(request.app.state, "public_demo", False):
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            raise AppError("read_only_demo", "The synthetic demo is read-only.", 403)
+        request.state.actor = "Public synthetic demo"
+        return
     if settings.app_mode == "local":
         request.state.actor = settings.local_operator
         return

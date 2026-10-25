@@ -1,3 +1,4 @@
+import { demoLocation } from '../lib/api'
 import { X, FileText, ArrowUpRight } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
@@ -16,7 +17,7 @@ export function EvidenceDialog({ item, onClose }: { item: Match | Discrepancy; o
     <div className="dialog-content">
       <div className="rule-box"><h3>Decision rule</h3><p>{item.evidence.rule}</p>{'description' in item && item.description !== item.evidence.rule && <p>{item.description}</p>}</div>
       {'status' in item && <div className="inline-meta"><Badge value={item.status} /><Badge value={item.severity} /><span>Run {item.run_id.slice(0, 8)}</span></div>}
-      {'type' in item && <p><Link className="button primary" to={`/investigations?run=${item.run_id}&case=${item.id}`} onClick={onClose}>Open investigation<ArrowUpRight size={14} /></Link></p>}
+      {'type' in item && <p><Link className="button primary" to={`${demoLocation() ? '/demo' : ''}/investigations?run=${item.run_id}&case=${item.id}`} onClick={onClose}>Open investigation<ArrowUpRight size={14} /></Link></p>}
       <h3 className="section-label">Supporting records <span>{item.source_records.length}</span></h3>
       {item.source_records.map(record => <article className="source-card" key={record.id}>
         <div className="source-heading"><span><FileText size={16} />{record.record_type === 'order' ? 'Order' : record.record_type === 'payment' ? 'Payment' : 'Settlement'}</span><Badge value={record.provider_status || record.status || 'recorded'} /></div>
@@ -25,7 +26,7 @@ export function EvidenceDialog({ item, onClose }: { item: Match | Discrepancy; o
         <p className="muted">{record.provider ? `${record.provider} · ` : ''}{record.source_filename || 'Imported CSV'} · source row {record.source_row}</p>
         <details><summary>Original source values</summary><dl className="raw-values">{Object.entries(record.raw).map(([field, value]) => <div key={field}><dt>{field}</dt><dd>{value || '(empty)'}</dd></div>)}</dl></details>
         {!!record.interpretation?.row_changes.length && <details><summary>Import interpretation</summary><ul className="interpretation-notes">{record.interpretation.row_changes.map((change, index) => <li key={index}>{change}</li>)}</ul>{record.interpretation.correction_reason && <p>Review reason: {record.interpretation.correction_reason}</p>}</details>}
-        <Link className="text-link" to={`/imports?batch=${record.import_batch_id}`} onClick={onClose}>Open import provenance<ArrowUpRight size={13} /></Link>
+        <Link className="text-link" to={`${demoLocation() ? '/demo' : ''}/imports?batch=${record.import_batch_id}`} onClick={onClose}>Open import provenance<ArrowUpRight size={13} /></Link>
       </article>)}
       <p className="footnote">Imported records remain unchanged. Decisions shown apply only to this run's input snapshot.</p>
     </div>

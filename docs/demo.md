@@ -1,5 +1,9 @@
 # Local Demonstration Operations
 
+## Public Judge Route
+
+Open https://dbedhac79djfv.cloudfront.net and choose Try the demo. No credentials are required. The banner identifies a separate synthetic read-only workspace. Inspect the dashboard, open reconciliation evidence, follow import provenance, inspect the saved AI hypothesis when available, and download a report. The numbers come from the actual imported 100/100/90-record fixture and its recorded engine run. A saved provider hypothesis is labeled as an example; public visitors do not initiate provider calls. Sign-in is reserved for actual import and review actions in the protected operator workspace.
+
 This is a technical sequence to record, not a narration or a claim that a video exists. Use fictional files only and keep unrelated windows and credentials out of view. The learner supplies the narration and uploads the final video under the Devpost workflow.
 
 For a clean demonstration, start a separate backend process with a new DATABASE_URL such as sqlite:///./data/demo-recording.db and FEE_RULES_PATH=../sample-data/fee-rules.json. Apply Alembic migrations in that same process environment before starting Uvicorn. Use the ordinary loopback ports only when their previous services have been stopped deliberately. Preserve any existing financial workspace; never clear it for the recording. Start the frontend using README instructions.

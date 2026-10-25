@@ -1,13 +1,21 @@
 # AWS Deployment Runbook
 
+## Public Interface Revision
+
+The root now introduces the product, /demo opens a no-account read-only sample, and /login provides a custom form backed by Cognito. The protected operator store remains independent. The public sample uses reconcileos_public_demo on the same RDS instance, with 100 orders, 100 payments, 90 settlements, a manifest-verified run, and one actual saved OpenAI hypothesis. Public requests cannot call the provider or write review actions. The database role has SELECT-only access to sample tables.
+
+For an existing owned stack, update-interface creates and inspects a change set restricted to the Cognito client, response security headers, demo GET route, and maintenance secret access. It refuses replacements or unexpected resources. update-backend deploys the reviewed ZIP separately. initialize-demo creates or preserves the fixed synthetic database, imports through the actual APIs, verifies the oracle, saves at most one provider example, and grants read-only runtime access. Existing operator records and verification databases are preserved. Run publish for the frontend, then the hosted checks. These phases use the same required profile, account-id, and region arguments as the other operations below. No additional paid service or instance tier is introduced.
+
+Custom sign-in calls [Cognito InitiateAuth](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_InitiateAuth.html) over HTTPS. Passwords go directly to Cognito. Only the access token is retained for the tab; challenge flows use the existing provider code/PKCE path. CloudFront CSP explicitly allows both configured Cognito endpoints.
+
 The [authenticated demonstration](https://dbedhac79djfv.cloudfront.net) was deployed and verified on October 25, 2026. It uses the existing modular application and real private PostgreSQL. The local Windows application and SQLite database remain independent. Review the selected account, current costs, and budget before new provisioning.
 
-The hosted workspace contains four synthetic records, one completed run, two unresolved cases, three human review actions, and one validated AI hypothesis. The separate verification database contains the larger synthetic oracle. The operator username is joelanarba. Its final password is stored only in protected, ignored deploy/.local/operator-access.json. No password is published here.
+The protected operator workspace was initialized from four synthetic records and retains its executed runs, review actions, and validated AI history. The public and verification databases each contain the larger synthetic fixture independently. The operator username is joelanarba. Its password is stored only in protected, ignored deploy/.local/operator-access.json. No password is published here.
 
 ## Architecture
 
 - Private encrypted S3 frontend, served by CloudFront using its default HTTPS domain.
-- API Gateway HTTP API with a Cognito JWT authorizer for every financial route.
+- API Gateway HTTP API with a Cognito JWT authorizer for operator financial routes. Public GET /api/demo routes read only the isolated synthetic database.
 - Python 3.12 Lambda ZIP package, built on Windows using compatible Linux wheels.
 - Private encrypted Single-AZ RDS PostgreSQL 18.3, db.t4g.micro, 20 GB gp3 storage.
 - Separate runtime database role, migration administration, and narrowly scoped secret access.

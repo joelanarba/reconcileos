@@ -2,18 +2,21 @@ import { hostedAuth, invalidateSession, session } from './auth'
 
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || (hostedAuth ? '/api' : 'http://127.0.0.1:8000/api')).replace(/\/$/, '')
 if (hostedAuth && API_BASE !== '/api') throw new Error('Hosted requests must use the same-origin /api endpoint.')
-export const apiUrl = (path: string) => `${API_BASE}${path}`
+export const demoLocation = () => window.location.pathname === '/demo' || window.location.pathname.startsWith('/demo/')
+export const apiUrl = (path: string) => `${API_BASE}${demoLocation() && !path.startsWith('/demo/') ? '/demo' : ''}${path}`
 
 async function request(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers)
-  if (hostedAuth) {
+  const demo = demoLocation() || path.startsWith('/demo/')
+  if (demo && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) throw new Error('The synthetic demo is read-only. Sign in to work with your own records.')
+  if (hostedAuth && !demo) {
     const current = session()
     if (!current) { invalidateSession(); throw new Error('Your session expired. Sign in again.') }
     headers.set('Authorization', 'Bearer ' + current.access_token)
   }
   if (typeof options.body === 'string' && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const response = await fetch(apiUrl(path), { ...options, headers, signal: AbortSignal.timeout(60000) })
-  if (hostedAuth && response.status === 401) { invalidateSession(); throw new Error('Your session expired. Sign in again.') }
+  if (hostedAuth && !demo && response.status === 401) { invalidateSession(); throw new Error('Your session expired. Sign in again.') }
   return response
 }
 
@@ -43,6 +46,6 @@ export async function downloadCsv(path: string, filename: string) {
   }
   const url = URL.createObjectURL(await response.blob())
   const link = document.createElement('a')
-  link.href = url; link.download = filename; document.body.append(link); link.click(); link.remove()
+  link.href = url; link.download = (demoLocation() ? 'synthetic-demo-' : '') + filename; document.body.append(link); link.click(); link.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

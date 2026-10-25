@@ -93,6 +93,7 @@ test('real CSV import, validation, reconciliation, filters, and source evidence'
   expect(await readFile((await downloaded.path())!, 'utf8')).toContain('matched_order_value,GHS,1122800,11228.00')
   await page.screenshot({ path: 'test-results/reports-desktop.png', fullPage: true })
   await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: 'Menu', exact: true }).click()
   await page.getByRole('link', { name: 'Imports', exact: true }).click()
   await expect(page.getByRole('button', { name: /Download .* template/ })).toBeVisible()
   const narrowLayout = await page.evaluate(() => ({
