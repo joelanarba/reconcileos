@@ -1,0 +1,2 @@
+# Keep hosted fixture checksums identical across Windows and other checkouts.
+sample-data/cloud-demo/*.csv text eol=lf

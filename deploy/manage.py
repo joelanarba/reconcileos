@@ -63,7 +63,7 @@ class Deployment:
             raise RuntimeError("Refusing to use an existing stack without the ReconcileOS ownership tag.")
         return stack
 
-    def wait_stack(self, name):
+    def wait_stack(self, name, expected_status="CREATE_COMPLETE"):
         previous = None
         for _ in range(160):
             stack = self.stack(name)
@@ -71,7 +71,7 @@ class Deployment:
             if status != previous:
                 print(name + ": " + status, flush=True)
                 previous = status
-            if status in ("CREATE_COMPLETE", "UPDATE_COMPLETE"):
+            if status == expected_status:
                 return stack
             if status.endswith("FAILED") or status in ("ROLLBACK_COMPLETE", "DELETE_COMPLETE"):
                 for event in self.cf.describe_stack_events(StackName=name)["StackEvents"][:20]:
@@ -90,7 +90,7 @@ class Deployment:
         self.guard()
         self.cf.create_stack(StackName=name, TemplateBody=template.read_text(encoding="utf-8"), Parameters=list(parameters),
             Capabilities=["CAPABILITY_IAM"], Tags=[{"Key": "Project", "Value": "reconcileos"}, {"Key": "Owner", "Value": "joelanarba"}],
-            OnFailure="DO_NOTHING")
+            DisableRollback=True)
         return self.wait_stack(name)
 
     def outputs(self):
@@ -142,8 +142,20 @@ class Deployment:
         self.client("s3").upload_file(str(archive), parameters["ArtifactBucket"], key)
         self.cf.update_stack(StackName=self.args.stack, UsePreviousTemplate=True, Capabilities=["CAPABILITY_IAM"], Tags=current.get("Tags", []),
             Parameters=[{"ParameterKey": name, "ParameterValue": key} if name == "ArtifactKey" else {"ParameterKey": name, "UsePreviousValue": True} for name in parameters])
-        self.wait_stack(self.args.stack)
+        self.wait_stack(self.args.stack, "UPDATE_COMPLETE")
         print("Backend code updated using the existing infrastructure template.")
+
+    def repair_infrastructure(self):
+        current = self.stack(self.args.stack)
+        if not current or current["StackStatus"] not in ("CREATE_FAILED", "UPDATE_FAILED"):
+            raise RuntimeError("Repair requires an owned stack with preserved failed resources.")
+        self.guard()
+        self.cf.update_stack(StackName=self.args.stack, TemplateBody=(ROOT / "deploy" / "aws.yaml").read_text(encoding="utf-8"),
+            Parameters=[{"ParameterKey": item["ParameterKey"], "UsePreviousValue": True} for item in current["Parameters"]],
+            Capabilities=["CAPABILITY_IAM"], DisableRollback=True, Tags=current.get("Tags", []))
+        self.wait_stack(self.args.stack, "UPDATE_COMPLETE")
+        save_local(LOCAL / "outputs.json", self.outputs())
+        print("The preserved stack was repaired without deleting its successful resources.")
 
     def maintenance(self, action):
         self.guard()
@@ -246,7 +258,7 @@ class Deployment:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("status", "provision", "update-backend", "initialize", "verify-postgres", "connectivity", "configure-ai", "create-operator", "publish", "smoke"))
+    parser.add_argument("action", choices=("status", "provision", "update-backend", "repair-infrastructure", "initialize", "verify-postgres", "connectivity", "configure-ai", "create-operator", "publish", "smoke"))
     parser.add_argument("--profile", required=True)
     parser.add_argument("--account-id", required=True)
     parser.add_argument("--region", required=True)
@@ -269,4 +281,5 @@ if __name__ == "__main__":
     try:
         main()
     except ClientError as error:
-        raise SystemExit("AWS operation failed: " + error.response["Error"]["Code"] + ". Review the selected account and service permissions; no secrets are printed.") from None
+        detail = error.response["Error"]["Message"][:1200] if error.operation_name in ("UpdateStack", "CreateStack") else "Review the selected account and service permissions; no secrets are printed."
+        raise SystemExit("AWS operation failed: " + error.response["Error"]["Code"] + ". " + detail) from None

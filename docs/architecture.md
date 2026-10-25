@@ -1,6 +1,6 @@
 # Current Architecture
 
-This document describes the implemented local import, reconciliation, dashboard, review, reporting, and optional AI behavior. The approved full design is in devpost/spec.md; later slices are not treated as existing functionality here.
+This document describes implemented local and AWS import, reconciliation, dashboard, review, reporting, and optional AI behavior. The approved design and subsequent hosting request are recorded in devpost/spec.md.
 
 ## Record Flow
 
@@ -8,7 +8,7 @@ This document describes the implemented local import, reconciliation, dashboard,
 flowchart LR
     CSV[Synthetic or operator CSV] --> Preview[Bounded validation and stored preview]
     Preview --> Confirm[Atomic confirmation]
-    Confirm --> DB[(Local SQLite)]
+    Confirm --> DB[(SQLite locally or PostgreSQL on AWS)]
     DB --> Snapshot[Consistent recorded input snapshot]
     Snapshot --> Engine[Pure deterministic engine]
     Engine --> Results[Atomic matches and discrepancies]
@@ -45,4 +45,6 @@ Services bind to loopback by default, with explicit browser origins and trusted 
 
 Imported rows and snapshots have no edit/delete API. Audit events have no mutation route, and ORM guards reject ordinary object updates or deletes. Direct database administrators can still modify local files; no cryptographic immutability is claimed.
 
-Public service authentication and PostgreSQL behavior remain unverified. The subsequent AWS request added a hosted configuration and Cognito/Gateway access boundary with controlled application tests; actual AWS infrastructure and JWT signature verification are not established by those tests. See [hosting preparation](production-readiness.md). Review safeguards are tested locally. The optional AI adapter has controlled-response tests and actual OpenAI verification using isolated synthetic records. Its input includes explicit currency precision and exact decimal/display amounts from the same integer formatter used by report exports. An initial live amount-unit wording error prompted that correction; the follow-up response and persisted browser display were checked. This is not a general claim about model accuracy.
+The AWS demonstration uses CloudFront/private S3, Cognito code/PKCE sign-in, a Gateway JWT authorizer, and Lambda with private encrypted PostgreSQL. The runtime and maintenance functions share the same application modules. Secrets stay in Secrets Manager; native Windows builds package Linux wheels and the RDS public CA bundle. The private maintenance function applies migrations and verifies a separate synthetic database. The actual hosted browser journey and one OpenAI investigation passed; unauthenticated and altered-signature requests were rejected. See [hosting verification](production-readiness.md) for the exact evidence and operational limits.
+
+AI input includes explicit currency precision and exact decimal/display amounts from the shared integer formatter. An initial local live amount-unit error prompted that correction; corrected local and hosted responses were inspected. Neither the limited synthetic checks nor structured validation establishes general model accuracy. Hypotheses still require human review.

@@ -1,0 +1,25 @@
+{
+  "synthetic": true,
+  "fee_configuration": "No fee rules configured",
+  "summary": {
+    "total_orders": 2,
+    "cancelled_orders": 0,
+    "total_payment_records": 1,
+    "total_settlement_records": 1,
+    "total_eligible_payments": 1,
+    "total_payment_value": {"GHS": "12550"},
+    "excluded_duplicate_payment_records": 0,
+    "excluded_duplicate_payment_value": {},
+    "matched_order_count": 1,
+    "matched_order_value": {"GHS": "12550"},
+    "matched_settlement_count": 0,
+    "matched_settlement_value": {},
+    "match_count": 1,
+    "unresolved_discrepancy_count": 2,
+    "unresolved_discrepancy_value": {"GHS": "32550"},
+    "duplicate_notification_count": 0,
+    "missing_payment_count": 1,
+    "missing_settlement_evidence_count": 0,
+    "category_counts": {"missing_payment": 1, "fee_rule_missing": 1}
+  }
+}

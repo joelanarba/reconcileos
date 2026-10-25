@@ -1,0 +1,2 @@
+provider,settlement_ref,payment_ref,gross_amount,fee_amount,net_amount,currency,settled_at,description
+MTN_MOMO,SYN-CLOUD-SET-001,SYN-CLOUD-TX-001,125.50,1.26,124.24,GHS,2026-10-24T10:00:00Z,Synthetic settlement evidence with no configured fee contract

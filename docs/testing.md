@@ -1,6 +1,6 @@
-# First-Slice Verification
+# Verification Record
 
-The application is under development. This record distinguishes executed checks from remaining work.
+Latest checkpoint, October 25, 2026: 176 backend tests, 19 frontend tests, production build, real RDS PostgreSQL migration/oracle checks, live authenticated API checks, and the complete hosted Edge journey including one OpenAI investigation passed. Historical sections record earlier checkpoints and their limits at those times. Current AWS evidence is detailed at the end.
 
 ## Executed Before Import Feedback
 
@@ -104,3 +104,19 @@ The complete backend suite passed 173 tests with the same TestClient warning. El
 Real Lambda imports, IPv6 egress, Cognito browser sign-in, Gateway signature checks, PostgreSQL migrations/integration, hosted financial workflow, and backup restore remain unexecuted while recurring-cost approval is pending. See the [deployment runbook](../deploy/README.md) for explicit phases and verification limits.
 
 A final AWS documentation review corrected the subject guard: Cognito identifiers are opaque and are not guaranteed RFC UUID values. Two additional checks accept a short opaque subject and preserve a stable bounded actor for a longer subject. The full backend suite then passed 175 tests. The deployment ZIP was rebuilt with this correction. No real Cognito identity is claimed by these controlled checks.
+
+## Executed AWS Deployment
+
+The user approved the paid setup. The existing profile and us-east-1 account were verified before provisioning. Initial attempts exposed an unavailable managed cache-policy reference, the non-resumable OnFailure=DO_NOTHING setting, and the account's minimum 10 unreserved Lambda executions. Stack-owned policies, DisableRollback, and shared concurrency corrected those issues. The first stack was proved empty before recreation; the subsequent recovery preserved PostgreSQL. No account-wide quota or original local data was changed.
+
+RDS reports PostgreSQL 18.3, db.t4g.micro, 20 GB gp3, encrypted storage, no public access, and seven-day backups. Real Linux Lambda execution loaded the package and CA bundle, migrated the main database to 0001_initial, and checked the runtime user's connection. The private verification function passed migrations, schema parity, the independent 100/100/90-record summary, note/resolve/reopen history, CSV parsing, and allocation uniqueness in reconcileos_verification. This is not every test against PostgreSQL or a production concurrency study.
+
+OpenAI HTTPS connectivity succeeded from the private network without NAT. The key was stored server-side in Secrets Manager. Live API checks returned 401 without authentication, accepted a real Cognito token for workspace/template/dashboard, and hid public API documentation. An altered token signature was also rejected with 401.
+
+The real Edge check completed in 49.5 seconds against https://dbedhac79djfv.cloudfront.net. It completed code/PKCE sign-in, imported four synthetic records through three source types, matched the small independent manifest, persisted note/resolve/reopen under the authenticated actor, requested one consented OpenAI investigation, verified unchanged status/snapshot/financial summaries, downloaded exact CSV amounts, reloaded history, and signed out. No browser script errors occurred. The inspected report screenshot and API agree on GHS 125.50 matched order value, two unresolved cases, and GHS 325.50 affected recorded value. There is no assumed fee contract or accepted settlement value.
+
+The saved AI note correctly described the second order as GHS 200.00 and stated that payment evidence was absent. Four audit events and one AI note were read back. This is one hosted synthetic explanation, not general model-quality evidence. Earlier browser attempts failed at native DNS and Cognito hidden-form/accessible-name selectors before financial imports or AI. The corrected run passed. Private failure-text credentials were redacted, recording was disabled, and the final operator password was rotated and verified.
+
+The small no-fee-contract fixture added one test; the local suite passed 176 tests with the recorded TestClient warning. The frontend's 19 tests and TypeScript/Vite build passed. Hosted Excel, live provider-failure simulation, backup restoration, historical transfer, and load/concurrency testing remain unexecuted. Their local coverage remains distinct from hosted evidence.
+
+A final control-plane read confirmed that the active Python 3.12 function's code SHA-256 matches the reviewed ZIP, and that plaintext OpenAI keys and database URLs/passwords are absent from its environment configuration. Secrets are loaded at runtime. The empty retained frontend bucket from the failed initial stack was verified against deleted-stack inventory and removed without touching live storage. The final credential was checked after rotation.

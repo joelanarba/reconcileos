@@ -3,6 +3,7 @@ import { FileSearch, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../../lib/api'
+import { hostedAuth } from '../../lib/auth'
 import { formatMoney } from '../../lib/money'
 import type { CaseDetail, Discrepancy, Page, Run } from '../../types/api'
 import { Badge, displayTime, EmptyState, ErrorMessage, Loading, Pagination } from '../../components/common'
@@ -61,7 +62,7 @@ export function CasePanel({ item }: { item: CaseDetail }) {
       {!!item.manual_matches.length && <div className="proposal-box"><h3>Active manual associations</h3>{item.manual_matches.map(match => <div key={match.id} className="manual-match"><code>{match.id.slice(0, 8)}</code><span>Accepted order-payment relationship</span><button className="button secondary compact" disabled={disabled} onClick={() => act('reverse_match', match.id)}>Reverse association</button></div>)}</div>}
       <AIAssistance item={item} /><h3>Investigation notes</h3>{!item.investigations.length && <p className="muted">No notes recorded.</p>}{item.investigations.map(note => <article className="history-entry" key={note.id}><strong>{note.kind === 'ai' ? 'AI hypothesis' : 'Operator note'} / {note.actor} / {displayTime(note.created_at)}</strong><p>{note.explanation}</p>{note.kind === 'ai' && <><p>Suggested next step: {note.suggested_action}</p><details><summary>Validated structured explanation and limitations</summary><pre className="ai-json">{JSON.stringify(note.evidence, null, 2)}</pre></details><small>Provider {String(note.ai_metadata?.provider || '')} / Model {String(note.ai_metadata?.model || '')}. Hypothesis only.</small></>}</article>)}
       <h3>Audit history</h3>{!item.audit_history.length && <p className="muted">No review actions recorded.</p>}{item.audit_history.map(event => <article className="history-entry" key={event.id}><strong>{event.action.replaceAll('_', ' ')} / {event.actor}</strong><small>{displayTime(event.timestamp)} / {event.previous_state.status} to {event.new_state.status} / version {event.new_state.version}</small><p>{event.reason}</p></article>)}
-      <p className="footnote">The local operator is an operational label, not verified authentication. History is append-only through application operations, not cryptographically immutable.</p>
+      <p className="footnote">{hostedAuth ? 'Actions are attributed to the authenticated workspace operator.' : 'The local operator is an operational label, not verified authentication.'} History is append-only through application operations, not cryptographically immutable.</p>
     </div>{evidence && <EvidenceDialog item={item} onClose={() => setEvidence(false)} />}
   </section>
 }

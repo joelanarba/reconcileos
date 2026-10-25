@@ -2,7 +2,9 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-This local proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and local persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are also implemented. Optional AI investigation assistance is implemented through a server-configured JSON adapter. OpenAI execution has been verified with isolated synthetic records; hypotheses remain subject to human review.
+This proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and durable persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are implemented. Optional OpenAI investigation assistance returns validated hypotheses that remain subject to human review.
+
+The authenticated [AWS demonstration](https://dbedhac79djfv.cloudfront.net) runs on private PostgreSQL. It contains four clearly labeled synthetic records. Access requires an approved Cognito operator; credentials are not published. The complete hosted browser journey, including one consented synthetic OpenAI investigation, passed on October 25, 2026. Local Windows startup remains available below.
 
 ## Current Workflow
 
@@ -14,7 +16,7 @@ This local proof of concept supports order, payment, and settlement CSV/Excel im
 6. Open Investigations to add notes, approve or reject supported associations, resolve or reopen cases, and inspect audit history. Case disposition does not prove payment or settlement.
 7. Use Reports to export the original and current summaries or case evidence as formula-neutralized CSV.
 
-The application runs in clearly labeled local single-workspace mode. It does not authenticate operators, connect to payment providers, access bank accounts, or move money. Provider names identify the source labels in CSV files.
+Local mode uses one workspace and a clearly labeled local operator without authentication. The AWS mode uses real Cognito sign-in, API Gateway JWT verification, and operator-group authorization. Neither mode connects to payment providers, accesses bank accounts, or moves money. Provider names identify source labels in imported files.
 
 ## Financial Rules
 
@@ -108,9 +110,9 @@ The backend is a FastAPI modular monolith using SQLAlchemy ORM models, explicit 
 
 SQLite foreign keys are enabled on every connection. Explicit transaction handling and a workspace write revision serialize financial writes. Database constraints enforce active allocation uniqueness. Imports and completed results persist atomically. Source records are not edited through the API.
 
-PostgreSQL configuration uses postgresql+psycopg://USER:PASSWORD@HOST:5432/reconcileos with the included Psycopg driver. This example is not a credential. PostgreSQL migrations, integration behavior, and deployment have not been executed. Changing DATABASE_URL does not transfer SQLite data. A future empty database can be migrated and source files deliberately re-imported; carrying over review history requires a separately verified transfer process.
+PostgreSQL configuration uses postgresql+psycopg://USER:PASSWORD@HOST:5432/reconcileos with Psycopg 3. This example is not a credential. Migrations, schema parity, the independent 100/100/90-record synthetic oracle, review history, CSV export, and allocation uniqueness passed against real RDS PostgreSQL 18.3. The main hosted workflow was separately verified through the browser. Changing DATABASE_URL does not transfer SQLite data; carrying over existing history requires a separately verified transfer process.
 
-AWS deployment was requested after the local application was verified. Hosted access includes a prepared Cognito sign-in flow, Gateway-context operator enforcement, Linux Lambda package builder, private PostgreSQL templates, and explicit account-guarded deployment phases. The existing Builder-challenges profile was verified for us-east-1; no resources have been provisioned while the recurring budget is pending. Real Cognito/Gateway authorization, PostgreSQL, TLS, secret management, and deployment checks remain unexecuted. The local operator label is not authentication. See the [AWS runbook](deploy/README.md) and [hosting preparation](docs/production-readiness.md) for actual status, costs, access controls, and remaining checks.
+The AWS demonstration was deployed after explicit cost approval in us-east-1. CloudFront serves private S3 assets, API Gateway verifies Cognito tokens, and Lambda connects to encrypted private RDS through verified TLS. Database and OpenAI credentials stay in Secrets Manager. The hosted workflow uses synthetic data; the original local database was not transferred or reset. The current limits are 4 MiB/1,000 rows hosted and 10 MiB/10,000 rows locally. See the [AWS runbook](deploy/README.md) and [hosting verification](docs/production-readiness.md) for costs, operations, and remaining limitations. Backup restoration and production capacity have not been verified.
 
 See [architecture](docs/architecture.md) and [known limitations](docs/limitations.md).
 
@@ -120,4 +122,4 @@ The installed Build With AI: Basics Learn Skill Pack is sourced from challengepo
 
 The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. All four implementation slices are implemented and mechanically checked. Early hands-on feedback produced the flexible importer revision. The learner retry, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
 
-The 6-ship workflow, public repository publishing, demo video, learner-written submission fields, and learner submission remain pending. A factual [preparation checklist](docs/submission-checklist.md) and [demo operations guide](docs/demo.md) are included. No submission or deployment is claimed.
+Public repository publishing, the demo video, learner-written submission fields, and learner submission remain pending. A factual [preparation checklist](docs/submission-checklist.md) and [demo operations guide](docs/demo.md) are included. AWS deployment is verified separately; no Devpost submission is claimed.

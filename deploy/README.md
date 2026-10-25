@@ -1,6 +1,8 @@
 # AWS Deployment Runbook
 
-This is an optional hosted demonstration of the existing modular application. It is not a completed deployment. The local Windows application and SQLite database remain independent. Review the selected AWS account, current costs, and budget before provisioning.
+The [authenticated demonstration](https://dbedhac79djfv.cloudfront.net) was deployed and verified on October 25, 2026. It uses the existing modular application and real private PostgreSQL. The local Windows application and SQLite database remain independent. Review the selected account, current costs, and budget before new provisioning.
+
+The hosted workspace contains four synthetic records, one completed run, two unresolved cases, three human review actions, and one validated AI hypothesis. The separate verification database contains the larger synthetic oracle. The operator username is joelanarba. Its final password is stored only in protected, ignored deploy/.local/operator-access.json. No password is published here.
 
 ## Architecture
 
@@ -13,7 +15,7 @@ This is an optional hosted demonstration of the existing modular application. It
 - Private IAM-invoked maintenance function for initialization, dedicated synthetic database checks, and bounded network verification.
 - Dual-stack private subnets and an IPv6 egress-only internet gateway. No NAT gateway, public database, EC2 instance, or local container runtime.
 
-CloudFront forwards authorization and the origin API hostname without caching financial responses. See [AWS managed origin policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html). Hosted access relies on [API Gateway JWT verification](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html), followed by the application's operator-group and trusted-context checks.
+CloudFront uses stack-owned cache/origin policies. Financial responses have zero cache TTL; viewer headers, cookies, and query strings are forwarded except for Host, which is replaced by the API hostname. See [origin header policies](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-originrequestpolicy-headersconfig.html). Hosted access relies on [API Gateway JWT verification](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html), followed by operator-group and trusted-context checks.
 
 ## Cost Review
 
@@ -43,7 +45,7 @@ $targetArgs = @('--profile', 'YOUR_PROFILE', '--account-id', 'YOUR_12_DIGIT_ACCO
 & .\backend\.venv\Scripts\cfn-lint.exe deploy\bootstrap.yaml deploy\aws.yaml -r us-east-1
 ```
 
-The ZIP, Linux dependency tree, public RDS CA bundle, hashes, target metadata, outputs, and operator credentials belong only in ignored deploy/.local/. No local environment file, SQLite database, personal learner profile, Windows extension library, or credential file is included. Project migrations are packaged under migrations/ to avoid overwriting the installed Alembic library. A successful package build does not prove that Linux imports or PostgreSQL integration have executed.
+The ZIP, Linux dependency tree, public RDS CA bundle, hashes, target metadata, outputs, and credentials belong only in ignored deploy/.local/. No local environment file, SQLite database, personal learner profile, Windows extension library, or credential file is included. Migrations are packaged under migrations/ to avoid overwriting the installed Alembic library. This package actually executed in Lambda; future builds still need runtime checks.
 
 ## Provision After Cost Approval
 
@@ -68,11 +70,22 @@ The optional configure-ai phase reads only the existing private local OpenAI key
 
 The operator phase uses username joelanarba and a generated password, suppresses invitation delivery, and stores credentials in deploy/.local/operator-access.json with the local user's file permissions. Do not print that file into shared logs, commit it, or publish it. Existing operator passwords are not reset automatically. A partially completed operator setup requires inspection before recovery.
 
-The smoke phase checks HTTPS delivery, unauthenticated denial, an actual Cognito access token, hosted workspace identity, templates, dashboard, and unavailable public API documentation. It does not create financial records or exercise the full financial journey. After it passes, verify hosted CSV/Excel import, reconciliation, review/audit, report export, browser PKCE sign-in/sign-out, safe AI failure, and an explicitly consented synthetic AI request. Record those outcomes separately. Backup restore has not been tested.
+The smoke phase checks HTTPS delivery, unauthenticated denial, a real Cognito access token, workspace identity, templates, dashboard, and unavailable API documentation. It does not create financial records. The separate Edge journey passed code/PKCE sign-in, three-source CSV imports, expected reconciliation, note/resolve/reopen, authenticated audit actors, one consented OpenAI investigation, CSV export, reload, and sign-out. The AI correctly used GHS 200.00 and left financial summaries unchanged. A tampered token signature returned 401. Excel and provider-failure paths have local coverage but were not repeated on this host. Backup restore is untested.
+
+Run the hosted browser check from frontend only against the reviewed demonstration workspace. It refuses unknown existing imports. The optional AI flag makes one bounded synthetic provider request.
+
+```powershell
+$env:HOSTED_VERIFY_AI = '1'
+npm.cmd run test:e2e -- --config playwright.hosted.config.ts
+```
+
+Authentication traces, video, and automatic screenshots are disabled. Password fields are excluded from the test accessibility snapshot, and teardown redacts private failure text. The operator password was rotated after verification and the new credential checked. Do not share authentication artifacts.
 
 ## Limits and Operations
 
-Hosted uploads are limited to 4 MiB and 1,000 rows to fit synchronous Gateway/Lambda request and execution limits. Local mode retains 10 MiB and 10,000 rows. The interface reads the actual limits from the backend. Hosted requests have a 28-second function limit; optional AI requests use a 20-second provider deadline. This is a small demonstration, not a bulk-processing or high-availability deployment.
+Hosted uploads are limited to 4 MiB and 1,000 rows. Local mode retains 10 MiB and 10,000 rows. The interface reads the actual limits from the backend. Hosted requests have a 28-second limit; AI uses a 20-second provider deadline. This account has 10 unreserved Lambda executions and cannot reserve part of that minimum pool. Functions use shared concurrency with API throttling at 10 requests/second and burst 20. No global quota was changed. This is a small demonstration, not validated bulk processing or high availability.
+
+New stacks use DisableRollback so failed creation can resume. The initial OnFailure=DO_NOTHING preserved resources but was not resumable; that stack was checked for zero databases/functions, users, files, and AI keys before recreation. Its retained empty frontend bucket was later removed after ownership and deleted-stack inventory checks. A subsequent reservation failure was repaired while preserving PostgreSQL. The repair-infrastructure phase supports preserved CREATE_FAILED/UPDATE_FAILED states; inspect template changes before using it. No automatic teardown occurs.
 
 To update backend code, rebuild the package, review its changes, then run the explicit update-backend phase. That phase changes the artifact parameter using the existing infrastructure template. It does not silently replace database/network resources. Re-run relevant hosted checks afterward. Use publish again for frontend changes.
 

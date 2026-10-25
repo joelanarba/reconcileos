@@ -1,0 +1,2 @@
+provider,transaction_ref,order_ref,amount,currency,paid_at,status,description
+MTN_MOMO,SYN-CLOUD-TX-001,SYN-CLOUD-001,125.50,GHS,2026-10-23T09:01:00Z,successful,Synthetic hosted demonstration payment

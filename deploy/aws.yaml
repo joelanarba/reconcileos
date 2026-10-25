@@ -162,6 +162,42 @@ Resources:
   Api:
     Type: AWS::ApiGatewayV2::Api
     Properties: {Name: !Sub '${AWS::StackName}-api', ProtocolType: HTTP}
+  StaticCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${AWS::StackName}-static-cache'
+        DefaultTTL: 86400
+        MinTTL: 0
+        MaxTTL: 31536000
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig: {HeaderBehavior: none}
+          CookiesConfig: {CookieBehavior: none}
+          QueryStringsConfig: {QueryStringBehavior: none}
+  ApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${AWS::StackName}-api-no-cache'
+        DefaultTTL: 0
+        MinTTL: 0
+        MaxTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: false
+          EnableAcceptEncodingBrotli: false
+          HeadersConfig: {HeaderBehavior: none}
+          CookiesConfig: {CookieBehavior: none}
+          QueryStringsConfig: {QueryStringBehavior: none}
+  ApiOriginPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub '${AWS::StackName}-api-forwarding'
+        HeadersConfig: {HeaderBehavior: allExcept, Headers: [host]}
+        CookiesConfig: {CookieBehavior: all}
+        QueryStringsConfig: {QueryStringBehavior: all}
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -187,7 +223,7 @@ Resources:
           AllowedMethods: [GET, HEAD, OPTIONS]
           CachedMethods: [GET, HEAD]
           Compress: true
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          CachePolicyId: !Ref StaticCachePolicy
           ResponseHeadersPolicyId: !Ref ResponseHeaders
           FunctionAssociations: [{EventType: viewer-request, FunctionARN: !GetAtt SpaRouting.FunctionARN}]
         CacheBehaviors:
@@ -196,8 +232,8 @@ Resources:
             ViewerProtocolPolicy: https-only
             AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
             CachedMethods: [GET, HEAD]
-            CachePolicyId: 413f1602-6f71-4f7a-861e-3c6172f87a9f
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId: !Ref ApiCachePolicy
+            OriginRequestPolicyId: !Ref ApiOriginPolicy
             ResponseHeadersPolicyId: !Ref ResponseHeaders
   FrontendPolicy:
     Type: AWS::S3::BucketPolicy
@@ -275,7 +311,6 @@ Resources:
       Code: {S3Bucket: !Ref ArtifactBucket, S3Key: !Ref ArtifactKey}
       MemorySize: 1024
       Timeout: 28
-      ReservedConcurrentExecutions: 3
       VpcConfig: {SubnetIds: [!Ref SubnetA, !Ref SubnetB], SecurityGroupIds: [!Ref AppNetwork], Ipv6AllowedForDualStack: true}
       Environment:
         Variables:
@@ -305,7 +340,6 @@ Resources:
       Code: {S3Bucket: !Ref ArtifactBucket, S3Key: !Ref ArtifactKey}
       MemorySize: 1024
       Timeout: 300
-      ReservedConcurrentExecutions: 1
       VpcConfig: {SubnetIds: [!Ref SubnetA, !Ref SubnetB], SecurityGroupIds: [!Ref AppNetwork], Ipv6AllowedForDualStack: true}
       Environment:
         Variables:
@@ -341,7 +375,7 @@ Resources:
       ApiId: !Ref Api
       StageName: '$default'
       AutoDeploy: true
-      DefaultRouteSettings: {ThrottlingBurstLimit: 5, ThrottlingRateLimit: 2}
+      DefaultRouteSettings: {ThrottlingBurstLimit: 20, ThrottlingRateLimit: 10}
   InvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
