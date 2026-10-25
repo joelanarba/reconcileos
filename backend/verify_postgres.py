@@ -24,6 +24,10 @@ def main():
     url = os.environ.get("POSTGRES_TEST_DATABASE_URL", "")
     if not url.startswith("postgresql+psycopg://"):
         raise SystemExit("Set POSTGRES_TEST_DATABASE_URL to an explicitly authorized PostgreSQL test database.")
+    verify(url, BACKEND_ROOT.parent / "sample-data")
+
+
+def verify(url, samples):
     engine = database_engine(url)
     try:
         if inspect(engine).get_table_names():
@@ -34,9 +38,8 @@ def main():
     config.attributes["database_url"] = url
     command.upgrade(config, "head")
     command.check(config)
-    samples = BACKEND_ROOT.parent / "sample-data"
     expected = json.loads((samples / "demo" / "expected-results.json").read_text())
-    settings = Settings(database_url=url, fee_rules_path=str(samples / "fee-rules.json"), _env_file=None)
+    settings = Settings(database_url=url, app_mode="local", allowed_hosts=["testserver"], fee_rules_path=str(samples / "fee-rules.json"), _env_file=None)
     with TestClient(create_app(settings)) as client:
         for source in ("orders", "payments", "settlements"):
             response = client.post(f"/api/imports/preview?source_type={source}", content=(samples / "demo" / f"{source}.csv").read_bytes())

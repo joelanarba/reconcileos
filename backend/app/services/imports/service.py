@@ -20,7 +20,7 @@ def lock_workspace(session):
 
 def preview_batch(session, settings, source_type: str, filename: str, content: bytes):
     if len(content) > settings.max_upload_bytes:
-        raise AppError("file_too_large", "Files may not exceed 10 MiB.", 413)
+        raise AppError("file_too_large", "The file exceeds the workspace upload limit.", 413)
     display_name = unquote(filename).replace("\\", "/").split("/")[-1]
     display_name = re.sub(r"[\x00-\x1f\x7f]", "", display_name)[:160]
     if not display_name.lower().endswith(SUPPORTED_EXTENSIONS):

@@ -50,7 +50,7 @@ def test_hosted_rejects_http_headers_without_gateway_context(client):
 
 @pytest.mark.parametrize("field,value,status", [
     ("iss", "https://other.example", 401), ("client_id", "otherclient", 401),
-    ("token_use", "id", 401), ("sub", "arbitrary-actor", 401),
+    ("token_use", "id", 401), ("sub", None, 401),
     ("exp", "0", 401), ("exp", "NaN", 401), ("exp", "Infinity", 401),
     ("scope", "openid", 403), ("cognito:groups", "[different-group]", 403),
 ])
@@ -75,6 +75,20 @@ def test_approved_operator_can_access_workspace(client, groups):
     assert response.status_code == 200
     assert response.json()["mode"] == "aws"
     assert response.json()["operator"] == "cognito:" + SUBJECT
+
+
+@pytest.mark.parametrize("subject", ["opaque-cognito-subject", "opaque-subject-" + "x" * 200])
+def test_cognito_subject_is_opaque_and_fits_the_audit_actor(client, subject):
+    event = gateway_event()
+    event["requestContext"]["authorizer"]["jwt"]["claims"]["sub"] = subject
+    hosted = hosted_client(client, event)
+    response = hosted.get("/api/workspace")
+    assert response.status_code == 200
+    actor = response.json()["operator"]
+    assert actor.startswith("cognito:") and len(actor) <= 80
+    assert hosted.get("/api/workspace").json()["operator"] == actor
+    if len(subject) <= 64:
+        assert actor == "cognito:" + subject
 
 
 def test_hosted_review_records_authenticated_actor(imported_client):

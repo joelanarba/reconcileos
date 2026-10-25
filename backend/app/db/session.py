@@ -17,7 +17,8 @@ def database_engine(database_url: str):
         database_path.parent.mkdir(parents=True, exist_ok=True)
         url = url.set(database=str(database_path.resolve()))
     options = {"check_same_thread": False, "timeout": 5} if is_sqlite else {}
-    engine = create_engine(url, connect_args=options, hide_parameters=True, pool_pre_ping=not is_sqlite)
+    pool_options = {} if is_sqlite else {"pool_size": 2, "max_overflow": 0, "pool_timeout": 5}
+    engine = create_engine(url, connect_args=options, hide_parameters=True, pool_pre_ping=not is_sqlite, **pool_options)
     if is_sqlite:
         @event.listens_for(engine, "connect")
         def configure_sqlite(connection, connection_record):

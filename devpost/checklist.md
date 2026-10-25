@@ -89,6 +89,7 @@ The map is a standalone offline project guide, not an application screen or HTML
 ## Revisions
 
 - October 24, 2026: the learner requested AWS deployment and PostgreSQL provisioning after confirming the local core workflow. Preparation adds hosted access controls while preserving local mode and the existing SQLite database. The selected AWS profile/account, spending budget, region, and data-initialization choice are pending. No AWS resource, real Cognito integration, PostgreSQL migration, or cloud verification is marked complete.
+- October 25, 2026: following the learner's direction to use an existing profile, Builder-challenges was verified and us-east-1 retained. The default token is invalid; no global AWS configuration was changed. Templates, package building, private maintenance, and guarded deployment phases are implemented. Basic CloudFormation validation, schema lint, current pricing, engine availability, and read-only stack status were checked. No stack exists, and the recurring budget is still pending. Local data is preserved. Hosted execution and PostgreSQL verification remain unperformed.
 
 - Browser test startup uses quoted absolute Python executable paths because Windows cmd.exe rejected the original relative forward-slash executable path.
 - Browser verification waits for visible preview state and the newly selected completed run. This avoids relying on an Edge inspector response body and prevents a prior run's identical values from satisfying a new-run check prematurely.

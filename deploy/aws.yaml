@@ -1,0 +1,364 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ReconcileOS authenticated demo with private encrypted PostgreSQL.
+Parameters:
+  ArtifactBucket: {Type: String}
+  ArtifactKey: {Type: String}
+  EngineVersion: {Type: String, Default: '18.3'}
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.76.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{Key: Name, Value: !Sub '${AWS::StackName}-private'}]
+  IPv6:
+    Type: AWS::EC2::VPCCidrBlock
+    Properties: {VpcId: !Ref Vpc, AmazonProvidedIpv6CidrBlock: true}
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.76.10.0/24
+      Ipv6CidrBlock: !Select [0, !Cidr [!Select [0, !GetAtt Vpc.Ipv6CidrBlocks], 2, 64]]
+      MapPublicIpOnLaunch: false
+  SubnetB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.76.11.0/24
+      Ipv6CidrBlock: !Select [1, !Cidr [!Select [0, !GetAtt Vpc.Ipv6CidrBlocks], 2, 64]]
+      MapPublicIpOnLaunch: false
+  EgressGateway:
+    Type: AWS::EC2::EgressOnlyInternetGateway
+    Properties: {VpcId: !Ref Vpc}
+  Routes:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref Vpc}
+  OutboundIPv6:
+    Type: AWS::EC2::Route
+    Properties: {RouteTableId: !Ref Routes, DestinationIpv6CidrBlock: '::/0', EgressOnlyInternetGatewayId: !Ref EgressGateway}
+  AssociateA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {RouteTableId: !Ref Routes, SubnetId: !Ref SubnetA}
+  AssociateB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {RouteTableId: !Ref Routes, SubnetId: !Ref SubnetB}
+  AppNetwork:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Private database and outbound HTTPS only
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIpv6: '::/0'}
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, CidrIp: 10.76.0.0/16}
+  DatabaseNetwork:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL from application security group only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, SourceSecurityGroupId: !Ref AppNetwork}
+      SecurityGroupEgress:
+        - {IpProtocol: tcp, FromPort: 5432, ToPort: 5432, CidrIp: 10.76.0.0/16}
+  DatabaseSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: {DBSubnetGroupDescription: Private dual-stack subnets, SubnetIds: [!Ref SubnetA, !Ref SubnetB]}
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      EngineVersion: !Ref EngineVersion
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: '20'
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: reconcileos
+      MasterUsername: reconcile_admin
+      ManageMasterUserPassword: true
+      DBSubnetGroupName: !Ref DatabaseSubnets
+      VPCSecurityGroups: [!Ref DatabaseNetwork]
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      CopyTagsToSnapshot: true
+      AutoMinorVersionUpgrade: true
+      EnablePerformanceInsights: false
+      EngineLifecycleSupport: open-source-rds-extended-support-disabled
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: ReconcileOS runtime database role, separate from migration administration
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"reconcile_app"}'
+        GenerateStringKey: password
+        PasswordLength: 40
+        ExcludePunctuation: true
+  AISecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: Optional server-side OpenAI key, populated separately
+      SecretString: '{"api_key":"","model":"gpt-5.4-mini-2026-03-17"}'
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${AWS::StackName}-operators'
+      UserPoolTier: LITE
+      AdminCreateUserConfig: {AllowAdminCreateUserOnly: true}
+      UsernameConfiguration: {CaseSensitive: false}
+      AccountRecoverySetting: {RecoveryMechanisms: [{Name: admin_only, Priority: 1}]}
+      MfaConfiguration: OPTIONAL
+      EnabledMfas: [SOFTWARE_TOKEN_MFA]
+      Policies:
+        PasswordPolicy: {MinimumLength: 14, RequireLowercase: true, RequireUppercase: true, RequireNumbers: true, RequireSymbols: true, TemporaryPasswordValidityDays: 7}
+  OperatorGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: {GroupName: reconcileos-operators, UserPoolId: !Ref UserPool, Description: Approved finance operators}
+  UserDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties: {Domain: !Sub '${AWS::StackName}-${AWS::AccountId}', UserPoolId: !Ref UserPool, ManagedLoginVersion: 1}
+  Frontend:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true}
+      BucketEncryption: {ServerSideEncryptionConfiguration: [{ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}}]}
+  OriginAccess:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig: {Name: !Sub '${AWS::StackName}-frontend', OriginAccessControlOriginType: s3, SigningBehavior: always, SigningProtocol: sigv4}
+  SpaRouting:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub '${AWS::StackName}-spa'
+      AutoPublish: true
+      FunctionConfig: {Comment: Frontend routes only, Runtime: cloudfront-js-2.0}
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          if (!request.uri.startsWith('/api/') && !request.uri.split('/').pop().includes('.')) request.uri = '/index.html';
+          return request;
+        }
+  ResponseHeaders:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub '${AWS::StackName}-security'
+        SecurityHeadersConfig:
+          ContentTypeOptions: {Override: true}
+          FrameOptions: {FrameOption: DENY, Override: true}
+          ReferrerPolicy: {ReferrerPolicy: no-referrer, Override: true}
+          StrictTransportSecurity: {AccessControlMaxAgeSec: 31536000, IncludeSubdomains: true, Override: true}
+          ContentSecurityPolicy:
+            Override: true
+            ContentSecurityPolicy: !Sub "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com"
+  Api:
+    Type: AWS::ApiGatewayV2::Api
+    Properties: {Name: !Sub '${AWS::StackName}-api', ProtocolType: HTTP}
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${AWS::StackName} authenticated financial operations'
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        ViewerCertificate: {CloudFrontDefaultCertificate: true}
+        Origins:
+          - Id: frontend
+            DomainName: !GetAtt Frontend.RegionalDomainName
+            OriginAccessControlId: !Ref OriginAccess
+            S3OriginConfig: {OriginAccessIdentity: ''}
+          - Id: api
+            DomainName: !Sub '${Api}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig: {OriginProtocolPolicy: https-only, OriginSSLProtocols: [TLSv1.2]}
+        DefaultCacheBehavior:
+          TargetOriginId: frontend
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ResponseHeadersPolicyId: !Ref ResponseHeaders
+          FunctionAssociations: [{EventType: viewer-request, FunctionARN: !GetAtt SpaRouting.FunctionARN}]
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: https-only
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+            CachedMethods: [GET, HEAD]
+            CachePolicyId: 413f1602-6f71-4f7a-861e-3c6172f87a9f
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            ResponseHeadersPolicyId: !Ref ResponseHeaders
+  FrontendPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Frontend
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${Frontend.Arn}/*'
+            Condition: {StringEquals: {'AWS:SourceArn': !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}'}}
+          - Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: [!GetAtt Frontend.Arn, !Sub '${Frontend.Arn}/*']
+            Condition: {Bool: {'aws:SecureTransport': false}}
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes: [openid, aws.cognito.signin.user.admin]
+      SupportedIdentityProviders: [COGNITO]
+      CallbackURLs: [!Sub 'https://${Distribution.DomainName}/auth/callback']
+      LogoutURLs: [!Sub 'https://${Distribution.DomainName}/login']
+      ExplicitAuthFlows: [ALLOW_ADMIN_USER_PASSWORD_AUTH, ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      AccessTokenValidity: 15
+      IdTokenValidity: 15
+      RefreshTokenValidity: 1
+      TokenValidityUnits: {AccessToken: minutes, IdToken: minutes, RefreshToken: days}
+      ReadAttributes: [sub]
+      WriteAttributes: []
+  Authorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref Api
+      Name: CognitoOperators
+      AuthorizerType: JWT
+      IdentitySource: ['$request.header.Authorization']
+      JwtConfiguration: {Audience: [!Ref AppClient], Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'}
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: {Version: '2012-10-17', Statement: [{Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: sts:AssumeRole}]}
+      ManagedPolicyArns: [!Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole']
+      Policies:
+        - PolicyName: ReadRuntimeSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement: [{Effect: Allow, Action: secretsmanager:GetSecretValue, Resource: [!Ref AppSecret, !Ref AISecret]}]
+  MaintenanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: {Version: '2012-10-17', Statement: [{Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: sts:AssumeRole}]}
+      ManagedPolicyArns: [!Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole']
+      Policies:
+        - PolicyName: ReadMigrationSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement: [{Effect: Allow, Action: secretsmanager:GetSecretValue, Resource: [!Ref AppSecret, !GetAtt Database.MasterUserSecret.SecretArn]}]
+  AppFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: [OutboundIPv6, AssociateA, AssociateB]
+    Properties:
+      Runtime: python3.12
+      Architectures: [x86_64]
+      Handler: aws_runtime.handler
+      Role: !GetAtt AppRole.Arn
+      Code: {S3Bucket: !Ref ArtifactBucket, S3Key: !Ref ArtifactKey}
+      MemorySize: 1024
+      Timeout: 28
+      ReservedConcurrentExecutions: 3
+      VpcConfig: {SubnetIds: [!Ref SubnetA, !Ref SubnetB], SecurityGroupIds: [!Ref AppNetwork], Ipv6AllowedForDualStack: true}
+      Environment:
+        Variables:
+          APP_MODE: aws
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          AWS_API_ID: !Ref Api
+          COGNITO_ISSUER: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}'
+          COGNITO_CLIENT_ID: !Ref AppClient
+          ALLOWED_HOSTS: !Sub '["${Api}.execute-api.${AWS::Region}.amazonaws.com"]'
+          CORS_ORIGINS: !Sub '["https://${Distribution.DomainName}"]'
+          DB_HOST: !GetAtt Database.Endpoint.Address
+          DB_NAME: reconcileos
+          APP_DB_SECRET_ARN: !Ref AppSecret
+          AI_SECRET_ARN: !Ref AISecret
+          LLM_TIMEOUT_SECONDS: '20'
+          MAX_UPLOAD_BYTES: '4194304'
+          MAX_IMPORT_ROWS: '1000'
+          FEE_RULES_PATH: ''
+  MaintenanceFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: [OutboundIPv6, AssociateA, AssociateB]
+    Properties:
+      Runtime: python3.12
+      Architectures: [x86_64]
+      Handler: aws_maintenance.handler
+      Role: !GetAtt MaintenanceRole.Arn
+      Code: {S3Bucket: !Ref ArtifactBucket, S3Key: !Ref ArtifactKey}
+      MemorySize: 1024
+      Timeout: 300
+      ReservedConcurrentExecutions: 1
+      VpcConfig: {SubnetIds: [!Ref SubnetA, !Ref SubnetB], SecurityGroupIds: [!Ref AppNetwork], Ipv6AllowedForDualStack: true}
+      Environment:
+        Variables:
+          APP_MODE: local
+          DB_HOST: !GetAtt Database.Endpoint.Address
+          DB_NAME: reconcileos
+          MASTER_DB_SECRET_ARN: !GetAtt Database.MasterUserSecret.SecretArn
+          APP_DB_SECRET_ARN: !Ref AppSecret
+  AppLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: {LogGroupName: !Sub '/aws/lambda/${AppFunction}', RetentionInDays: 7}
+  MaintenanceLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: {LogGroupName: !Sub '/aws/lambda/${MaintenanceFunction}', RetentionInDays: 7}
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties: {ApiId: !Ref Api, IntegrationType: AWS_PROXY, IntegrationUri: !GetAtt AppFunction.Arn, PayloadFormatVersion: '2.0', TimeoutInMillis: 29000}
+  FinancialRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Api
+      RouteKey: 'ANY /api/{proxy+}'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref Authorizer
+      AuthorizationScopes: [aws.cognito.signin.user.admin]
+      Target: !Join ['/', [integrations, !Ref Integration]]
+  HealthRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: {ApiId: !Ref Api, RouteKey: 'GET /api/health', AuthorizationType: NONE, Target: !Join ['/', [integrations, !Ref Integration]]}
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref Api
+      StageName: '$default'
+      AutoDeploy: true
+      DefaultRouteSettings: {ThrottlingBurstLimit: 5, ThrottlingRateLimit: 2}
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AppFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/*/api/*'
+Outputs:
+  AppUrl: {Value: !Sub 'https://${Distribution.DomainName}'}
+  FrontendBucket: {Value: !Ref Frontend}
+  DistributionId: {Value: !Ref Distribution}
+  ApiUrl: {Value: !Sub 'https://${Api}.execute-api.${AWS::Region}.amazonaws.com'}
+  AppFunction: {Value: !Ref AppFunction}
+  MaintenanceFunction: {Value: !Ref MaintenanceFunction}
+  UserPoolId: {Value: !Ref UserPool}
+  ClientId: {Value: !Ref AppClient}
+  CognitoDomain: {Value: !Sub 'https://${UserDomain}.auth.${AWS::Region}.amazoncognito.com'}
+  AISecretArn: {Value: !Ref AISecret}
+  DatabaseId: {Value: !Ref Database}

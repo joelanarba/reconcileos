@@ -99,7 +99,7 @@ def health(request: Request, session=Depends(get_session)):
 def workspace(request: Request, session=Depends(get_session)):
     data = entity_data(session.get(Workspace, WORKSPACE_ID))
     return public(data | {"operator": request.state.actor, "mode": request.app.state.settings.app_mode, "currency_precision": PRECISION, "providers": PROVIDERS,
-                          "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes,
+                          "available_sources": list(TEMPLATES), "capabilities": ["file_import", "column_mapping", "excel_import", "three_source_reconciliation", "source_evidence"], "rule_scope": "Orders, payments, and settlements", "max_upload_bytes": request.app.state.settings.max_upload_bytes, "max_import_rows": request.app.state.settings.max_import_rows,
                           "fee_configuration": fee_configuration(request.app.state.settings), "ai": availability(request.app.state.settings)})
 
 
@@ -115,11 +115,11 @@ async def preview(request: Request, source_type: Literal["orders", "payments", "
     limit = request.app.state.settings.max_upload_bytes
     content_length = request.headers.get("content-length")
     if content_length and (not content_length.isdecimal() or int(content_length) > limit):
-        raise AppError("file_too_large", "Files may not exceed 10 MiB.", 413)
+        raise AppError("file_too_large", "The file exceeds the workspace upload limit.", 413)
     body = bytearray()
     async for chunk in request.stream():
         if len(body) + len(chunk) > limit:
-            raise AppError("file_too_large", "Files may not exceed 10 MiB.", 413)
+            raise AppError("file_too_large", "The file exceeds the workspace upload limit.", 413)
         body.extend(chunk)
     batch = await run_in_threadpool(preview_batch, session, request.app.state.settings, source_type, request.headers.get("x-filename", "upload.csv"), bytes(body))
     return batch_data(batch)

@@ -5,6 +5,7 @@ export type Workspace = {
   id: string; name: string; operator: string; mode: string; input_revision: number
   available_sources: SourceType[]; rule_scope: string; currency_precision: Record<string, number>
   max_upload_bytes?: number
+  max_import_rows?: number
   fee_configuration?: FeeConfiguration
   ai?: { available: boolean; provider: string | null; model: string | null; message: string }
 }
