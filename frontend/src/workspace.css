@@ -259,9 +259,9 @@
   .workspace-v2 .run-selector { align-items:stretch; flex-direction:column; gap:16px; }
   .workspace-v2 .run-selector select { min-width:0; width:100%; }
   .workspace-v2 .run-meta { justify-content:flex-start; }
-  .workspace-v2 .search-field { max-width:none; }
+  .workspace-v2 .search-field { max-width:none; flex-basis:100%; }
   .workspace-v2 .table-toolbar>.count-label { flex-basis:100%; margin-left:0; }
-  .workspace-v2 .table-toolbar>select { max-width:100%; flex:1; min-width:0; }
+  .workspace-v2 .table-toolbar>select { max-width:100%; flex:1 1 200px; min-width:0; }
   .workspace-v2 .table-scroll table { min-width:620px; }
   .workspace-v2 .report-body table { min-width:420px; }
   .workspace-v2 .button-group { flex-wrap:wrap; }

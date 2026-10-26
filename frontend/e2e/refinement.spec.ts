@@ -94,11 +94,13 @@ for (const width of [1440, 1280, 1024, 768, 390]) {
           const large = parseFloat(style.fontSize) >= 24 || parseFloat(style.fontSize) >= 18.67 && Number(style.fontWeight) >= 700
           return ratio < (large ? 3 : 4.5) ? [{ text: element.textContent?.slice(0, 40), ratio }] : []
         })
-        return { viewport: innerWidth, document: document.documentElement.scrollWidth, tiny, lowContrast }
+        const narrowFilters = Array.from(document.querySelectorAll('.table-toolbar select')).filter(element => element.getClientRects().length && element.getBoundingClientRect().width < 180).map(element => element.getAttribute('aria-label'))
+        return { viewport: innerWidth, document: document.documentElement.scrollWidth, tiny, lowContrast, narrowFilters }
       })
       expect(layout.document, url).toBeLessThanOrEqual(width)
       expect(layout.tiny, url).toEqual([])
       expect(layout.lowContrast, url).toEqual([])
+      expect(layout.narrowFilters, url).toEqual([])
       if (url !== '/login') await page.screenshot({ path: `test-results/refined-${width}-${url === '/' ? 'landing' : url.includes('case=') ? 'case' : url.split('/').pop()}.png`, fullPage: true })
     }
     if (width <= 768) {
