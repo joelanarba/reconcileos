@@ -13,7 +13,7 @@ export function DemoImportsPage() {
   const history = useQuery({ queryKey: ['imports'], queryFn: () => api<Page<Batch>>('/imports') })
   const preview = useQuery({ queryKey: ['batch', batchId, page], enabled: !!batchId, queryFn: () => api<Batch>(`/imports/${batchId}?page=${page}`) })
   return <>
-    <div className="page-heading"><div><div className="eyebrow">SOURCE RECORDS</div><h1>Imported evidence</h1><p>Inspect the synthetic files used to calculate this demonstration.</p></div><Link className="button primary" to="/demo/reconciliation">View reconciliation<ArrowRight size={16} /></Link></div>
+    <div className="page-heading"><div><h1>Imported evidence</h1><p>Inspect the synthetic files used to calculate this demonstration.</p></div><Link className="button primary" to="/demo/reconciliation">View reconciliation<ArrowRight size={16} /></Link></div>
     <div className="scope-note">This public demo is read-only. <Link className="text-link" to="/login">Sign in to import CSV or Excel files into your own workspace.</Link></div>
     <ErrorMessage error={history.error || preview.error} />
     {history.isLoading && <Loading />}

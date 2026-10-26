@@ -4,11 +4,12 @@ export const API_BASE = (import.meta.env.VITE_API_BASE_URL || (hostedAuth ? '/ap
 if (hostedAuth && API_BASE !== '/api') throw new Error('Hosted requests must use the same-origin /api endpoint.')
 export const demoLocation = () => window.location.pathname === '/demo' || window.location.pathname.startsWith('/demo/')
 export const apiUrl = (path: string) => `${API_BASE}${demoLocation() && !path.startsWith('/demo/') ? '/demo' : ''}${path}`
+class ReadOnlyDemoError extends Error {}
 
 async function request(path: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers)
   const demo = demoLocation() || path.startsWith('/demo/')
-  if (demo && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) throw new Error('The synthetic demo is read-only. Sign in to work with your own records.')
+  if (demo && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) throw new ReadOnlyDemoError('The synthetic demo is read-only. Sign in to work with your own records.')
   if (hostedAuth && !demo) {
     const current = session()
     if (!current) { invalidateSession(); throw new Error('Your session expired. Sign in again.') }
@@ -25,6 +26,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   try {
     response = await request(path, options)
   } catch (error) {
+    if (error instanceof ReadOnlyDemoError) throw error
     if (error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
       throw new Error('The request timed out. Refresh the records before retrying a confirmation or run.')
     }

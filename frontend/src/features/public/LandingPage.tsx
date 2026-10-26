@@ -1,169 +1,30 @@
-import {
-  ArrowRight,
-  ArrowRightLeft,
-  CheckCheck,
-  ClipboardList,
-  FileBarChart,
-  FileInput,
-  FileSearch,
-  FileSpreadsheet,
-  ListChecks,
-  LoaderCircle,
-  LockKeyhole,
-  ShieldCheck,
-} from 'lucide-react'
+﻿import { ArrowRight, CheckCheck, LoaderCircle, LockKeyhole } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { moneyLines } from '../../lib/money'
 import type { Summary } from '../../types/api'
 import './public.css'
 
-export type LandingPageProps = {
-  summary?: Summary
-  loading?: boolean
-  error?: unknown
-}
-
-const workflow = [
-  { icon: FileInput, title: 'Import', description: 'Bring in order, payment, and settlement exports. Review the columns and source rows before confirming.' },
-  { icon: ArrowRightLeft, title: 'Match', description: 'Compare references, amounts, currencies, and statuses using explicit reconciliation rules.' },
-  { icon: ClipboardList, title: 'Investigate', description: 'Inspect differences alongside the original records. Add notes and document your review decisions.' },
-  { icon: FileBarChart, title: 'Report', description: 'Export reconciliation summaries and review cases, with the original results available for comparison.' },
-]
+export type LandingPageProps = { summary?: Summary; loading?: boolean; error?: unknown }
 
 export function LandingPage({ summary, loading = false, error }: LandingPageProps = {}) {
   const localOperator = import.meta.env.VITE_AUTH_MODE !== 'cognito'
-  const matchedValues = summary ? moneyLines(summary.matched_order_value) : []
-
-  return (
-    <div className="public-site">
-      <a className="public-skip-link" href="#public-main">Skip to content</a>
-      <header className="public-header">
-        <div className="public-container public-header-inner">
-          <Link className="public-brand" to="/" aria-label="ReconcileOS home">
-            <span className="public-brand-mark"><CheckCheck size={23} aria-hidden="true" /></span>
-            <span><strong>ReconcileOS</strong><small>FINANCIAL OPERATIONS</small></span>
-          </Link>
-          <nav className="public-nav" aria-label="Public navigation">
-            <a className="public-nav-section" href="#workflow">Workflow</a>
-            <a className="public-nav-section" href="#evidence">Evidence</a>
-            <Link className="public-sign-in" to="/login">Sign in</Link>
-            <Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={15} aria-hidden="true" /></Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="public-main" id="public-main" tabIndex={-1}>
-        <section className="public-container public-hero" aria-labelledby="public-title">
-          <div className="public-hero-copy">
-            <p className="public-kicker">ORDER TO PAYMENT TO SETTLEMENT</p>
-            <h1 id="public-title">Reconcile payments.<br />Review every difference.</h1>
-            <p className="public-hero-description">Find missing payments, unmatched settlements, and conflicting records. Compare your exports, inspect the source evidence, and record the decisions behind your results.</p>
-            <div className="public-hero-actions">
-              <Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={16} aria-hidden="true" /></Link>
-              <Link className="public-button public-button-secondary" to="/login">Sign in to your workspace</Link>
-            </div>
-            <p className="public-demo-note"><ShieldCheck size={16} aria-hidden="true" /><span>Synthetic data. Read-only access. No account needed.</span></p>
-          </div>
-
-          <figure className="public-preview">
-            <div className="public-preview-panel" aria-busy={loading}>
-              <div className="public-preview-header">
-                <div><p className="public-kicker">PUBLIC DEMO</p><h2>Reconciliation overview</h2></div>
-                <span className="public-readonly"><LockKeyhole size={12} aria-hidden="true" />Read-only</span>
-              </div>
-              {loading ? (
-                <div className="public-preview-state" role="status">
-                  <LoaderCircle className="public-loading-icon" size={23} aria-hidden="true" />
-                  <strong>Loading demo results</strong>
-                  <p>Fetching the computed summary from the synthetic records.</p>
-                </div>
-              ) : error || !summary ? (
-                <div className="public-preview-state" role={error ? 'alert' : 'status'}>
-                  <FileSearch size={25} aria-hidden="true" />
-                  <strong>Demo summary unavailable</strong>
-                  <p>The reconciliation results could not be loaded. Open the demo to check its status.</p>
-                  <Link className="public-text-link" to="/demo">Open the demo<ArrowRight size={14} aria-hidden="true" /></Link>
-                </div>
-              ) : (
-                <>
-                  <dl className="public-source-counts" aria-label="Synthetic source records">
-                    <div><dt>Orders</dt><dd>{summary.total_orders.toLocaleString('en-GB')}</dd></div>
-                    <div><dt>Payment records</dt><dd>{summary.total_payment_records.toLocaleString('en-GB')}</dd></div>
-                    <div><dt>Settlement records</dt><dd>{summary.total_settlement_records.toLocaleString('en-GB')}</dd></div>
-                  </dl>
-                  <div className="public-ledger">
-                    <div className="public-ledger-heading" aria-hidden="true"><span>Computed results</span><span>Count</span></div>
-                    <dl className="public-result-list">
-                      <div><dt><CheckCheck size={15} aria-hidden="true" />Matched orders</dt><dd>{summary.matched_order_count.toLocaleString('en-GB')}</dd></div>
-                      <div><dt><CheckCheck size={15} aria-hidden="true" />Matched settlements</dt><dd>{summary.matched_settlement_count.toLocaleString('en-GB')}</dd></div>
-                      <div className="public-review-result"><dt><FileSearch size={15} aria-hidden="true" />Unresolved cases</dt><dd>{summary.unresolved_discrepancy_count.toLocaleString('en-GB')}</dd></div>
-                    </dl>
-                    <dl className="public-ledger-value">
-                      <div>
-                        <dt>Matched order value</dt>
-                        <dd>{matchedValues.length ? matchedValues.map(value => <span key={value}>{value}</span>) : <span>No recorded value</span>}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                  <div className="public-preview-footer"><span>Computed from synthetic records.<br />Currencies shown separately.</span><Link className="public-text-link" to="/demo">View records<ArrowRight size={14} aria-hidden="true" /></Link></div>
-                </>
-              )}
-            </div>
-            <figcaption>A view into the public demo, using its actual reconciliation results.</figcaption>
-          </figure>
-        </section>
-
-        <div className="public-container">
-          <div className="public-capabilities" aria-label="Workspace capabilities">
-            <p>Built around the records you already have.</p>
-            <span><FileSpreadsheet size={17} aria-hidden="true" />CSV and Excel imports</span>
-            <span><FileSearch size={17} aria-hidden="true" />Source evidence</span>
-            <span><FileBarChart size={17} aria-hidden="true" />CSV reports</span>
-          </div>
-        </div>
-
-        <section className="public-container public-workflow" id="workflow" aria-labelledby="public-workflow-title">
-          <div className="public-section-heading">
-            <div><p className="public-kicker">THE WORKFLOW</p><h2 id="public-workflow-title">From source file to reviewed result.</h2></div>
-            <p>Keep the evidence in view at each step, from the first import to the final report.</p>
-          </div>
-          <ol className="public-workflow-grid">
-            {workflow.map(({ icon: Icon, title, description }, index) => (
-              <li key={title}>
-                <div className="public-workflow-top"><span className="public-workflow-icon"><Icon size={21} strokeWidth={1.6} aria-hidden="true" /></span><span className="public-step-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span></div>
-                <h3>{title}</h3><p>{description}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="public-evidence" id="evidence" aria-labelledby="public-evidence-title">
-          <div className="public-container public-evidence-grid">
-            <div className="public-evidence-intro">
-              <p className="public-kicker">EVIDENCE AND ACCESS</p>
-              <h2 id="public-evidence-title">A result is only useful when you can explain it.</h2>
-              <p>See which records support a match, why a difference was flagged, and how a review decision was made.</p>
-              <div className="public-evidence-boundary"><ShieldCheck size={19} aria-hidden="true" /><p>ReconcileOS compares records. It does not access bank accounts or move money.</p></div>
-            </div>
-            <div className="public-evidence-list">
-              <article><FileSearch size={21} strokeWidth={1.6} aria-hidden="true" /><div><h3>Follow the source</h3><p>Original source rows and import choices stay linked to the results. Inspect the supporting records and the rule behind each match or case.</p></div></article>
-              <article><ListChecks size={21} strokeWidth={1.6} aria-hidden="true" /><div><h3>Keep a record of the review</h3><p>Explicit matching rules identify candidates. Review notes, reasons, and case decisions are recorded in the history.</p></div></article>
-              <article><LockKeyhole size={21} strokeWidth={1.6} aria-hidden="true" /><div><h3>Separate exploration from operations</h3><p>The public demo is read-only and uses synthetic records. Approved operators sign in to import files and record workspace decisions.</p></div></article>
-            </div>
-          </div>
-        </section>
-
-        <section className="public-container public-demo-section" aria-labelledby="public-demo-title">
-          <div className="public-demo-invitation">
-            <div><p className="public-kicker">TAKE A CLOSER LOOK</p><h2 id="public-demo-title">Inspect the records yourself.</h2><p>Explore computed results and supporting synthetic records. No account or credentials required.</p></div>
-            <Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={16} aria-hidden="true" /></Link>
-          </div>
-        </section>
-      </main>
-
-      <footer className="public-footer">
-        <div className="public-container public-footer-inner"><div><Link to="/" className="public-footer-brand">ReconcileOS</Link><span>Orders. Payments. Settlements.</span></div><nav aria-label="Footer navigation"><Link to="/demo">Public demo</Link><Link to="/login">Sign in</Link>{localOperator && <Link to="/dashboard">Local operator workspace<ArrowRight size={13} aria-hidden="true" /></Link>}</nav></div>
-      </footer>
-    </div>
-  )
+  return <div className="public-site">
+    <a className="public-skip-link" href="#public-main">Skip to content</a>
+    <header className="public-header"><div className="public-container public-header-inner"><Link className="public-brand" to="/" aria-label="ReconcileOS home"><span className="public-brand-mark"><CheckCheck size={23} aria-hidden="true" /></span><span><strong>ReconcileOS</strong><small>Financial operations</small></span></Link><nav className="public-nav" aria-label="Public navigation"><a className="public-nav-section" href="#workflow">How it works</a><Link className="public-sign-in" to="/login">Sign in</Link><Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={16} /></Link></nav></div></header>
+    <main className="public-main" id="public-main" tabIndex={-1}>
+      <section className="public-container public-hero" aria-labelledby="public-title">
+        <div className="public-hero-copy"><p className="public-kicker">For finance teams comparing payment exports</p><h1 id="public-title">Find the payment differences your records missed.</h1><p className="public-hero-description">Compare orders, payment records, and settlements. Find where they disagree, inspect the evidence, and keep a record of every review decision.</p><div className="public-hero-actions"><Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={16} /></Link><Link className="public-text-link" to="/login">Sign in to your workspace<ArrowRight size={16} /></Link></div><p className="public-demo-note">Synthetic records. Read-only. No account needed.</p></div>
+        <figure className="public-preview"><div className="public-preview-panel" aria-busy={loading}><div className="public-preview-header"><div><h2>A completed reconciliation</h2><p>Actual results from the synthetic demo</p></div><span className="public-readonly"><LockKeyhole size={14} />Read-only</span></div>
+          {loading ? <div className="public-preview-state" role="status"><LoaderCircle className="public-loading-icon" size={24} /><strong>Loading demo results</strong></div> : error || !summary ? <div className="public-preview-state" role={error ? 'alert' : 'status'}><strong>Demo summary unavailable</strong><p>Open the demo to check its status.</p><Link className="public-text-link" to="/demo">Open the demo<ArrowRight size={16} /></Link></div> : <>
+            <dl className="public-source-counts"><div><dt>Orders</dt><dd>{summary.total_orders.toLocaleString('en-GB')}</dd></div><div><dt>Payments</dt><dd>{summary.total_payment_records.toLocaleString('en-GB')}</dd></div><div><dt>Settlements</dt><dd>{summary.total_settlement_records.toLocaleString('en-GB')}</dd></div></dl>
+            <div className="public-ledger"><dl className="public-result-list"><div><dt>Accepted order relationships</dt><dd>{summary.matched_order_count.toLocaleString('en-GB')}</dd></div><div><dt>Accepted settlement relationships</dt><dd>{summary.matched_settlement_count.toLocaleString('en-GB')}</dd></div><div className="public-review-result"><dt>Cases needing review</dt><dd>{summary.unresolved_discrepancy_count.toLocaleString('en-GB')}</dd></div></dl><dl className="public-ledger-value"><div><dt>Matched order value</dt><dd>{moneyLines(summary.matched_order_value).map(value => <span key={value}>{value}</span>)}</dd></div><div><dt>Matched settlement net</dt><dd>{moneyLines(summary.matched_settlement_value).map(value => <span key={value}>{value}</span>)}</dd></div></dl></div>
+            <div className="public-preview-footer"><span>Currencies stay separate.<br />Results describe recorded evidence.</span><Link className="public-text-link" to="/demo/reconciliation">Inspect results<ArrowRight size={16} /></Link></div>
+          </>}
+        </div><figcaption>Computed from the demo's source files each time a reconciliation runs.</figcaption></figure>
+      </section>
+      <section className="public-container product-workflow" id="workflow" aria-labelledby="workflow-title"><div><h2 id="workflow-title">Spend the review on the differences.</h2><p>When orders, payment notifications, and settlement exports arrive separately, finding the gaps means comparing records across files. ReconcileOS brings those records into one review.</p></div><ol><li><strong>Import your exports</strong><p>Upload CSV or Excel files. Review the column mapping and validation before confirming.</p></li><li><strong>Compare the records</strong><p>Explicit rules check references, exact amounts, currencies, statuses, and configured fees.</p></li><li><strong>Investigate and report</strong><p>Compare the evidence, document a decision, and export the current results alongside the original summary.</p></li></ol></section>
+      <section className="public-container product-boundaries"><div><h2>Evidence first. Decisions stay with you.</h2><p>Every match and case links to source records. Optional AI assistance explains possible relationships and uncertainty; it cannot approve a match or change an amount.</p><p>ReconcileOS compares files. It does not connect to payment providers, access bank accounts, or move money.</p></div><div className="product-demo-invitation"><h2>Follow a case from difference to evidence.</h2><p>Explore the read-only sample, inspect a saved AI investigation when available, and download the report.</p><Link className="public-button public-button-primary" to="/demo">Try the demo<ArrowRight size={16} /></Link></div></section>
+    </main>
+    <footer className="public-footer"><div className="public-container public-footer-inner"><div><Link to="/" className="public-footer-brand">ReconcileOS</Link><span>Orders. Payments. Settlements.</span></div><nav aria-label="Footer navigation"><Link to="/demo">Public demo</Link><Link to="/login">Sign in</Link>{localOperator && <Link to="/dashboard">Local operator workspace<ArrowRight size={14} /></Link>}</nav></div></footer>
+  </div>
 }

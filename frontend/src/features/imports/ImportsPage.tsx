@@ -58,7 +58,7 @@ export function ImportsPage({ workspace }: { workspace?: Workspace } = {}) {
   const batch = preview.data
 
   return <>
-    <div className="page-heading"><div><div className="eyebrow">RECORD MANAGEMENT</div><h1>Imports</h1><p>Bring in records from your existing CSV and Excel exports.</p></div><Link className="button secondary" to="/reconciliation">Reconciliation<ArrowRight size={15} /></Link></div>
+    <div className="page-heading"><div><h1>Imports</h1><p>Bring in records from your existing CSV and Excel exports.</p></div><Link className="button secondary" to="/reconciliation">Reconciliation<ArrowRight size={15} /></Link></div>
     {notice && <div className="alert success" role="status"><CheckCircle2 size={17} />{notice}</div>}
     <div className="import-grid"><section className="panel"><div className="panel-heading"><h2>Upload records</h2><span className="muted">CSV · Excel</span></div>
       <form className="upload-form" onSubmit={event => { event.preventDefault(); setNotice(''); confirm.reset(); upload.mutate() }}>

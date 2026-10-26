@@ -1,6 +1,6 @@
 # Submission Preparation Status
 
-This is a factual preparation record, not Devpost submission prose. AWS deployment is verified separately. No submission, video upload, public repository, or final learner readiness is claimed.
+This is a factual preparation record, not Devpost submission prose. The existing AWS deployment and public repository are verified separately. No submission, video upload, or final learner readiness is claimed. The October 26 refinement still requires production deployment approval.
 
 - [x] Approved scope, PRD, technical specification, and ordered build checklist are preserved in the repository.
 - [x] Real local imports, deterministic three-source reconciliation, dashboard, source evidence, human review, audit history, and report exports are implemented.
@@ -9,7 +9,7 @@ This is a factual preparation record, not Devpost submission prose. AWS deployme
 - [x] Windows startup, exact monetary rules, test execution, known limitations, and future PostgreSQL/hosting boundaries are documented.
 - [x] After explicit approval, the authenticated AWS demonstration was deployed and verified with real PostgreSQL migrations, the synthetic oracle, browser review/export, and one bounded OpenAI investigation.
 - [ ] Final learner exploration, agreed revisions, explicit readiness, and the Devpost learning wrap-up are completed.
-- [ ] Public GitHub repository creation and push are explicitly authorized, then its visibility and unauthenticated URL are verified. No remote is currently configured.
+- [x] The configured remote is the public joelanarba/reconcileos repository. Its visibility, active account, push permission, and existing commit/email association were verified on October 26.
 - [ ] Short working-product video is recorded and its public viewing permissions are verified.
 - [ ] Actual Devpost form fields and video constraints are checked against the current form.
 - [ ] Learner-written project description, required answers, and exit-survey responses are completed under 6-ship.

@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, ArrowRightLeft, CheckCheck, ClipboardList, Eye, EyeOff, FileBarChart, FileInput, LoaderCircle, LockKeyhole, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCheck, Eye, EyeOff, LoaderCircle, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ErrorMessage } from '../../components/common'
@@ -11,13 +11,6 @@ export type LoginPageProps = {
   error: unknown
   verificationRequired?: boolean
 }
-
-const steps = [
-  { icon: FileInput, title: 'Import', detail: 'Review your source records.' },
-  { icon: ArrowRightLeft, title: 'Match', detail: 'Compare orders, payments, and settlements.' },
-  { icon: ClipboardList, title: 'Investigate', detail: 'Explain differences with evidence.' },
-  { icon: FileBarChart, title: 'Report', detail: 'Keep a record of the results.' },
-]
 
 export function LoginPage({ onSubmit, onProviderSignIn, busy, error, verificationRequired = false }: LoginPageProps) {
   const [username, setUsername] = useState('')
@@ -39,23 +32,20 @@ export function LoginPage({ onSubmit, onProviderSignIn, busy, error, verificatio
     <div className="login-page">
       <a className="public-skip-link" href="#login-panel">Skip to sign in</a>
       <header className="login-header public-container">
-        <Link className="public-brand" to="/" aria-label="ReconcileOS home"><span className="public-brand-mark"><CheckCheck size={23} aria-hidden="true" /></span><span><strong>ReconcileOS</strong><small>FINANCIAL OPERATIONS</small></span></Link>
+        <Link className="public-brand" to="/" aria-label="ReconcileOS home"><span className="public-brand-mark"><CheckCheck size={23} aria-hidden="true" /></span><span><strong>ReconcileOS</strong><small>Financial operations</small></span></Link>
         <Link className="public-text-link login-return-home" to="/"><ArrowLeft size={15} aria-hidden="true" />Return home</Link>
       </header>
 
       <main className="login-main public-container">
         <section className="login-context" aria-labelledby="login-context-title">
-          <div><p className="public-kicker">THE OPERATOR WORKSPACE</p><h2 id="login-context-title">Keep the evidence <br />with the work.</h2><p className="login-context-description">Compare your financial records, investigate differences, and document the decisions behind the results.</p></div>
-          <ol className="login-workflow" aria-label="Reconciliation workflow">
-            {steps.map(({ icon: Icon, title, detail }) => <li key={title}><span className="login-step-icon"><Icon size={18} strokeWidth={1.6} aria-hidden="true" /></span><div><h3>{title}</h3><p>{detail}</p></div></li>)}
-          </ol>
-          <div className="login-demo-card"><p className="public-kicker">PUBLIC DEMO</p><h3>Take a look before signing in.</h3><p>Explore synthetic records in a read-only workspace. No account or credentials needed.</p><Link className="public-text-link" to="/demo">Try the demo<ArrowRight size={15} aria-hidden="true" /></Link></div>
+          <div><p className="public-kicker">Operator workspace</p><h2 id="login-context-title">Keep the evidence <br />with the work.</h2><p className="login-context-description">Compare your financial records, investigate differences, and document the decisions behind the results.</p></div>
+          <div className="login-demo-card"><p className="public-kicker">Public demo</p><h3>Take a look before signing in.</h3><p>Explore synthetic records in a read-only workspace. No account or credentials needed.</p><Link className="public-text-link" to="/demo">Try the demo<ArrowRight size={15} aria-hidden="true" /></Link></div>
         </section>
 
         <section className="login-panel" id="login-panel" aria-labelledby="login-title" tabIndex={-1}>
           <div className="login-panel-inner">
             <span className="login-lock-mark"><LockKeyhole size={23} strokeWidth={1.6} aria-hidden="true" /></span>
-            <p className="public-kicker">APPROVED OPERATOR ACCESS</p>
+            <p className="public-kicker">Operator access</p>
             <h1 id="login-title">{verificationRequired ? 'Complete account verification' : 'Sign in to ReconcileOS'}</h1>
             <p className="login-description" id={descriptionId}>{verificationRequired ? 'Your account requires an additional verification step before you can enter the workspace.' : 'Use the username and password provided by your workspace administrator.'}</p>
 

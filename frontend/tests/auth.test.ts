@@ -105,3 +105,11 @@ it('keeps public demo requests anonymous even with a signed-in operator session'
   const { api } = await import('../src/lib/api')
   await api('/demo/dashboard')
 })
+
+it('preserves an honest read-only error when a demo mutation is blocked before fetch', async () => {
+  const fetchMock = vi.fn()
+  vi.stubGlobal('fetch', fetchMock)
+  const { api } = await import('../src/lib/api')
+  await expect(api('/demo/runs', { method: 'POST' })).rejects.toThrow('The synthetic demo is read-only.')
+  expect(fetchMock).not.toHaveBeenCalled()
+})

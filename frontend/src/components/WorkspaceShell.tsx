@@ -38,7 +38,7 @@ export function WorkspaceShell({ children, workspace, mode, onSignOut }: Workspa
     <aside className="sidebar workspace-sidebar" aria-label="Workspace sidebar">
       <NavLink className="brand workspace-brand" to={`${prefix}/dashboard`} onClick={() => setNavigationOpen(false)} aria-label="ReconcileOS dashboard">
         <span className="brand-mark"><CheckCheck size={24} strokeWidth={2} aria-hidden="true" /></span>
-        <span><strong>ReconcileOS</strong><small>FINANCIAL OPERATIONS</small></span>
+        <span><strong>ReconcileOS</strong><small>Financial operations</small></span>
       </NavLink>
       <button className="workspace-menu-button" type="button" aria-expanded={navigationOpen} aria-controls="workspace-navigation" onClick={() => setNavigationOpen(open => !open)}>
         {navigationOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
@@ -46,17 +46,14 @@ export function WorkspaceShell({ children, workspace, mode, onSignOut }: Workspa
       </button>
       <div className="workspace-identity">
         <Building2 size={18} aria-hidden="true" />
-        <div><span>WORKSPACE</span><strong title={workspaceName}>{workspaceName}</strong><small>{modeLabel}</small></div>
+        <div><strong title={workspaceName}>{workspaceName}</strong><small>{modeLabel}</small></div>
       </div>
-      <div className="nav-label">OPERATIONS</div>
       <nav id="workspace-navigation" aria-label="Main navigation">
         {sections.map(({ path, label, icon: Icon }) => <NavLink key={path} to={`${prefix}${path}`} onClick={() => setNavigationOpen(false)}>
           <Icon size={18} strokeWidth={1.8} aria-hidden="true" /><span>{label}</span><ChevronRight size={14} className="workspace-nav-chevron" aria-hidden="true" />
         </NavLink>)}
       </nav>
       <div className="sidebar-bottom workspace-sidebar-bottom">
-        <div><ShieldCheck size={17} aria-hidden="true" />Evidence-led operations</div>
-        <p>Orders, payments, settlements.<br />Every result has a source.</p>
         <span className="workspace-mode"><Database size={13} aria-hidden="true" />{demo ? 'Separate sample database' : mode === 'aws' ? 'AWS mode' : 'Local mode'}</span>
       </div>
     </aside>
@@ -72,16 +69,18 @@ export function WorkspaceShell({ children, workspace, mode, onSignOut }: Workspa
         </div>
       </header>
 
-      <div className={`workspace-status-strip${demo ? ' workspace-demo-strip' : ''}`}>
+      {demo && <div className="workspace-status-strip workspace-demo-strip">
         <div className="workspace-status-copy">
           {demo ? <LockKeyhole size={16} aria-hidden="true" /> : <Database size={16} aria-hidden="true" />}
-          <strong>{demo ? 'Synthetic read-only sample' : 'Snapshot-based reconciliation'}</strong>
-          <span>{demo ? 'Explore seeded records in a separate sample workspace.' : workspace ? `Input revision ${workspace.input_revision} / ${workspace.available_sources.map(source => source.charAt(0).toUpperCase() + source.slice(1)).join(', ') || 'No source types configured'}` : 'Workspace details are loading.'}</span>
+          <strong>Synthetic read-only sample</strong>
+          <span>No account needed. Source records stay unchanged.</span>
         </div>
-        <Link className="text-link" to={`${prefix}/reconciliation`}>{demo ? 'Explore reconciliation' : 'Open reconciliation'}<ArrowRight size={14} aria-hidden="true" /></Link>
-      </div>
+      </div>}
 
-      <main id="workspace-content" className="workspace-content" tabIndex={-1}>{children}</main>
+      <main id="workspace-content" className="workspace-content" tabIndex={-1}>
+        {demo && <details className="demo-guide"><summary>Take a two-minute tour</summary><ol><li><Link to="/demo/reconciliation">View reconciliation results</Link></li><li><Link to="/demo/investigations?type=partial_payment">Inspect a payment difference and its evidence</Link></li>{workspace?.demo?.ai_case_id && <li><Link to={`/demo/investigations?case=${workspace.demo.ai_case_id}`}>Read a saved AI investigation</Link></li>}<li><Link to="/demo/reports">Explore and export the report</Link></li></ol><p>Review decisions and new AI requests are available only in an operator workspace.</p></details>}
+        {children}
+      </main>
       <footer className="app-footer workspace-footer"><span><CheckCheck size={14} aria-hidden="true" />ReconcileOS <span>/ Financial operations</span></span><span>{demo ? 'Synthetic records / Read-only access' : workspace?.rule_scope || 'Orders, payments, and settlements'}</span></footer>
     </div>
   </div>

@@ -4,7 +4,8 @@ from typing import Literal
 
 from fastapi import APIRouter, Body, Depends, Query, Request
 from fastapi.responses import Response
-from sqlalchemy import select
+from sqlalchemy import case as sql_case, func, select
+from sqlalchemy.orm import defer
 from starlette.concurrency import run_in_threadpool
 
 from app.core.config import PROVIDERS, WORKSPACE_ID
@@ -130,8 +131,11 @@ async def preview(request: Request, source_type: Literal["orders", "payments", "
 
 @router.get("/imports")
 def imports(page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), session=Depends(get_session)):
-    batches = session.scalars(select(ImportBatch).where(ImportBatch.workspace_id == WORKSPACE_ID).order_by(ImportBatch.created_at.desc(), ImportBatch.id)).all()
-    return public(paginate([{key: value for key, value in entity_data(batch).items() if key != "preview"} for batch in batches], page, page_size))
+    query = select(ImportBatch).where(ImportBatch.workspace_id == WORKSPACE_ID)
+    total = session.scalar(select(func.count()).select_from(query.subquery()))
+    batches = session.scalars(query.options(defer(ImportBatch.preview)).order_by(ImportBatch.created_at.desc(), ImportBatch.id).offset((page - 1) * page_size).limit(page_size)).all()
+    items = [{column.name: getattr(batch, column.name) for column in ImportBatch.__table__.columns if column.name != "preview"} for batch in batches]
+    return public({"items": items, "total": total, "page": page, "page_size": page_size})
 
 
 @router.get("/imports/{batch_id}")
@@ -163,9 +167,11 @@ def run_reconciliation(request: Request, session=Depends(get_session)):
 
 @router.get("/runs")
 def runs(page: int = Query(1, ge=1), page_size: int = Query(25, ge=1, le=100), session=Depends(get_session)):
-    records = session.scalars(select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID).order_by(ReconciliationRun.started_at.desc(), ReconciliationRun.id)).all()
+    query = select(ReconciliationRun).where(ReconciliationRun.workspace_id == WORKSPACE_ID)
+    total = session.scalar(select(func.count()).select_from(query.subquery()))
+    records = session.scalars(query.order_by(ReconciliationRun.started_at.desc(), ReconciliationRun.id).offset((page - 1) * page_size).limit(page_size)).all()
     revision = session.get(Workspace, WORKSPACE_ID).input_revision
-    return paginate([run_data(run, revision, session) for run in records], page, page_size)
+    return {"items": [run_data(run, revision, session) for run in records], "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/runs/{run_id}")
@@ -201,9 +207,12 @@ def discrepancies(run_id: str, search: str = Query("", max_length=128), type: st
     query = select(Discrepancy).where(Discrepancy.run_id == run.id, Discrepancy.workspace_id == WORKSPACE_ID)
     if type:
         query = query.where(Discrepancy.type == type)
-    if status:
+    if status == "unresolved":
+        query = query.where(Discrepancy.status != "resolved")
+    elif status:
         query = query.where(Discrepancy.status == status)
-    cases = session.scalars(query.order_by(Discrepancy.type, Discrepancy.case_key)).all()
+    severity_order = sql_case((Discrepancy.severity == "high", 0), (Discrepancy.severity == "medium", 1), else_=2)
+    cases = session.scalars(query.order_by(severity_order, Discrepancy.type, Discrepancy.case_key)).all()
     items = [entity_data(case) | {"source_records": evidence_records(run, case.evidence)} for case in cases
              if not search or search.casefold() in case.description.casefold() or matches_search(run, case.evidence, search)]
     return public(paginate(items, page, page_size))

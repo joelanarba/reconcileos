@@ -1,5 +1,7 @@
 # Local Demonstration Operations
 
+For the refined interface, use the [two-minute recording sequence and project description draft](release-demo.md). This revision remains local until production deployment is explicitly approved. The operations below also describe earlier recorded workflows.
+
 ## Public Judge Route
 
 Open https://dbedhac79djfv.cloudfront.net and choose Try the demo. No credentials are required. The banner identifies a separate synthetic read-only workspace. Inspect the dashboard, open reconciliation evidence, follow import provenance, inspect the saved AI hypothesis when available, and download a report. The numbers come from the actual imported 100/100/90-record fixture and its recorded engine run. A saved provider hypothesis is labeled as an example; public visitors do not initiate provider calls. Sign-in is reserved for actual import and review actions in the protected operator workspace.

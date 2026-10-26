@@ -1,6 +1,26 @@
 # Verification Record
 
-Latest checkpoint, October 25, 2026: 185 backend tests, 22 frontend tests, production build, four local browser checks, and three live hosted browser checks passed. The hosted checks cover the new public landing/demo, mobile navigation, and custom Cognito sign-in with the existing financial workflow. The separate public PostgreSQL demo matches the 100/100/90-record oracle, has verified SELECT-only runtime permissions, and contains one actual saved OpenAI hypothesis. Historical sections record earlier checkpoints and their limits at those times.
+Latest checkpoint, October 26, 2026: 188 backend tests, 39 frontend tests, TypeScript and the production build, and 10 local real-service browser checks passed. The original financial oracle is unchanged. Read-only checks against the existing AWS deployment also passed. The refined release has not been deployed; historical hosted workflow checks below describe earlier revisions.
+
+## October 26 Product Refinement
+
+The pre-edit audit is recorded in [refinement-audit.md](refinement-audit.md). Existing architecture, dependencies, money rules, review invariants, operator data, and planning documents were preserved.
+
+Executed checks:
+
+- Backend: 188 tests passed in 106.52 seconds, including the independent three-source oracle, exact money, allocation invariants, imports, review persistence, AI failures, reporting, hosted authorization, and demo isolation. Three new tests cover database pagination and summary work limited to the selected page, paginated import history, severity ordering, and unresolved filtering through resolve/reopen. The existing Starlette TestClient HTTPX deprecation warning remains. pip check found no broken requirements.
+- Frontend: 39 tests passed across seven files. Added checks cover exact evidence-derived explanations, mixed currencies, large integer differences, three-decimal fees, settlement net equations, repeated and ambiguous records, saved AI references/limitations, absent demo mutation controls, and truthful blocked-demo errors.
+- TypeScript and Vite production build passed. The final main JavaScript bundle is approximately 396.93 kB, 119.12 kB gzip; CSS is 75.69 kB, 13.44 kB gzip. No dependencies were added. Python compilation and git diff --check passed. No standalone frontend lint script is configured; these checks are not described as an ESLint run.
+- Ten real-service Microsoft Edge checks passed using separate, freshly migrated operator and public-demo SQLite files. They cover ordinary CSV mapping/correction, real XLSX/XLS input, full three-source reconciliation, source provenance, note/approve/resolve/reopen/reverse, persisted history after reload, exact CSV export, read-only mutation denial, keyboard tabs, and the offline source guide.
+- Responsive checks exercised landing, dashboard, reconciliation, investigation queue and detail, reports, and demo imports at 1440, 1280, 1024, 768, and 390px. Populated tables remain internally scrollable; document overflow and essential text below 12px are rejected. Critical table, label, status, severity, footnote, and warning text is checked for WCAG AA contrast. Amber is reserved for accents and large figures because it falls below 4.5:1 for small text on white.
+- A separate hosted-mode local frontend check verified the actual sign-in form at all five widths, then rendered the existing public AWS saved AI response through read-only HTTP interception. Both supporting record links worked, uncertainty was visible, mutation controls were absent, and no browser script errors occurred. Desktop and mobile screenshots were inspected. This was the refined local UI reading live public API responses, not a deployment of the new UI and not a new provider call.
+- Read-only AWS checks verified the selected existing account and UPDATE_COMPLETE stack. Anonymous operator endpoints and an invalid bearer token were rejected. Demo mutation requests were denied. The hosted original/current summaries match the independent fixture, and its one saved OpenAI investigation cites only the two supporting records. No operator records, infrastructure, credentials, or provider state were changed.
+- A separate read-only local snapshot replay produced the same complete result twice. One execution over 290 synthetic records took 12.23 ms in this Windows process. This is a local timing observation, not a capacity or production benchmark.
+- Source scans found only the nine approved CSS colors, no forbidden visual tokens or characters, and no committed-source secret-pattern candidates. This is a bounded scan, not a security certification. All six original planning documents remain byte-for-byte unchanged in Git.
+
+An intermediate build caught incomplete TypeScript fields in a new test fixture; the fixture was corrected before the passing build. A browser rerun initially stopped because the previous isolated test services still occupied their ports. Only those verified test processes were terminated before the fresh passing run. Ordinary development services were preserved.
+
+The existing PostgreSQL/AWS workflow has historical evidence below. This refinement has not been rerun as a deployed authenticated PostgreSQL workflow. Backup restoration, production load/concurrency, and broad AI quality remain outside the verified results. No new live model request was needed: saved presentation used an actual existing response, and provider-failure paths retain controlled-transport tests.
 
 ## Public Interface Verification
 

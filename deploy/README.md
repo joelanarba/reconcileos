@@ -1,5 +1,11 @@
 # AWS Deployment Runbook
 
+## October 26 Refinement Release
+
+This revision is prepared locally and has not been deployed. Verify the active account again and obtain production deployment approval before publishing it. It requires no infrastructure or service changes.
+
+Deploy the backend before publishing the frontend. The revised interface uses the new `status=unresolved` case filter; an older backend will interpret that value as a literal review status and return an empty list. Rebuild the backend ZIP, apply the explicit update-backend phase, check the filter and public write denial, then publish the frontend and repeat the hosted checks. Run the updated checks only after this release is deployed; they target the refined screens. Preserve the existing operator and synthetic databases. No new provider call is required to verify saved AI presentation.
+
 ## Public Interface Revision
 
 The root now introduces the product, /demo opens a no-account read-only sample, and /login provides a custom form backed by Cognito. The protected operator store remains independent. The public sample uses reconcileos_public_demo on the same RDS instance, with 100 orders, 100 payments, 90 settlements, a manifest-verified run, and one actual saved OpenAI hypothesis. Public requests cannot call the provider or write review actions. The database role has SELECT-only access to sample tables.

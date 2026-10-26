@@ -52,7 +52,7 @@ export function RowCorrection({ batch, row, onApply, onClose, pending, error }: 
     const excludedRows = [...base.excluded_rows.filter(number => number !== row.source_row), ...(excluded ? [row.source_row] : [])]
     onApply({ ...base, corrections, excluded_rows: excludedRows, reason })
   }
-  return <dialog className="evidence-dialog" ref={dialog} onCancel={onClose} aria-labelledby="row-correction-title"><header className="dialog-header"><div><div className="eyebrow">IMPORT REVIEW</div><h2 id="row-correction-title">Review source row {row.source_row}</h2></div><button className="icon-button" onClick={onClose} aria-label="Close row review"><X size={18} /></button></header>
+  return <dialog className="evidence-dialog" ref={dialog} onCancel={onClose} aria-labelledby="row-correction-title"><header className="dialog-header"><h2 id="row-correction-title">Review source row {row.source_row}</h2><button className="icon-button" onClick={onClose} aria-label="Close row review"><X size={18} /></button></header>
     <form className="dialog-content" onSubmit={event => { event.preventDefault(); submit() }}>
       <p className="mapping-intro">Original source values are preserved. Corrections and exclusions are recorded with your reason before anything is imported.</p>
       <div className="mapping-grid">{batch.import_info!.fields.map(field => <label key={field.key}>{field.label}<input aria-label={field.label} value={values[field.key] || ''} onChange={event => setValues(previous => ({ ...previous, [field.key]: event.target.value }))} maxLength={2000} />{row.errors.filter(issue => issue.field === field.key).map(issue => <span className="negative field-message" key={issue.message}>{issue.message}</span>)}</label>)}</div>
