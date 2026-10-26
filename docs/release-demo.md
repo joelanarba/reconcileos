@@ -1,6 +1,6 @@
 # Two-minute demonstration
 
-Use synthetic records only. The public route requires no account and cannot save decisions. Prepare an operator tab in advance if demonstrating a review action. The refined interface requires the reviewed release to be deployed before recording the hosted site.
+Use synthetic records only. The public route requires no account and cannot save decisions. Prepare an operator tab in advance if demonstrating a review action. The refined interface is deployed at https://dbedhac79djfv.cloudfront.net and its public and authenticated workflows have been verified.
 
 | Time | Show | Suggested narration |
 | --- | --- | --- |

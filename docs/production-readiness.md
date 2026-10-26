@@ -2,6 +2,8 @@
 
 The [authenticated demonstration](https://dbedhac79djfv.cloudfront.net) was deployed to us-east-1 on October 25, 2026 after the user approved the estimated USD 20-30 monthly setup. The existing Builder-challenges profile was verified and used explicitly; no global AWS configuration was changed. Local Windows development still uses SQLite, and its existing records were preserved. This document distinguishes executed checks from remaining production work.
 
+The October 26 refinement was deployed after explicit approval using the same account and infrastructure. The backend ZIP was checked against source and the running Lambda hash. Hosted public and authenticated browser checks passed, including real PostgreSQL reconciliation/review/export and saved AI evidence. Original operator imports and financial summaries and all resource physical IDs were preserved. A follow-up frontend correction keeps mobile case filters readable. See [the verification record](testing.md) for the executed checks and their limits.
+
 DATABASE_URL is resolved centrally. SQLAlchemy models use portable string IDs, JSON, integer minor units, UTC conversion, constraints, and parameterized expressions. SQLite enables foreign keys, explicit transactions, and a busy timeout. PostgreSQL uses its native transactions and the included Psycopg 3 driver. Concurrent review writes serialize on a workspace update; allocation uniqueness remains a database constraint. UTC binding differs between SQLite's naive storage and PostgreSQL's timezone-aware connection representation, with an aware UTC application interface.
 
 ## Independent PostgreSQL Check

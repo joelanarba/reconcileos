@@ -1,6 +1,6 @@
 # Local Demonstration Operations
 
-For the refined interface, use the [two-minute recording sequence and project description draft](release-demo.md). This revision remains local until production deployment is explicitly approved. The operations below also describe earlier recorded workflows.
+For the deployed refined interface, use the [two-minute recording sequence and project description draft](release-demo.md). The October 26 release was published and verified after explicit production approval. The operations below also describe earlier recorded workflows.
 
 ## Public Judge Route
 

@@ -1,6 +1,6 @@
 # Submission Preparation Status
 
-This is a factual preparation record, not Devpost submission prose. The existing AWS deployment and public repository are verified separately. No submission, video upload, or final learner readiness is claimed. The October 26 refinement still requires production deployment approval.
+This is a factual preparation record, not Devpost submission prose. The existing AWS deployment and public repository are verified separately. No submission, video upload, or final learner readiness is claimed. The October 26 refinement was deployed and verified after explicit production approval.
 
 - [x] Approved scope, PRD, technical specification, and ordered build checklist are preserved in the repository.
 - [x] Real local imports, deterministic three-source reconciliation, dashboard, source evidence, human review, audit history, and report exports are implemented.
@@ -8,6 +8,7 @@ This is a factual preparation record, not Devpost submission prose. The existing
 - [x] Synthetic source data and an independently specified expected-results manifest are included.
 - [x] Windows startup, exact monetary rules, test execution, known limitations, and future PostgreSQL/hosting boundaries are documented.
 - [x] After explicit approval, the authenticated AWS demonstration was deployed and verified with real PostgreSQL migrations, the synthetic oracle, browser review/export, and one bounded OpenAI investigation.
+- [x] The October 26 interface and backend refinement was deployed to the same resources. Hosted demo, sign-in, PostgreSQL review/export, saved AI presentation, and mobile navigation passed verification. No additional provider request was made.
 - [ ] Final learner exploration, agreed revisions, explicit readiness, and the Devpost learning wrap-up are completed.
 - [x] The configured remote is the public joelanarba/reconcileos repository. Its visibility, active account, push permission, and existing commit/email association were verified on October 26.
 - [ ] Short working-product video is recorded and its public viewing permissions are verified.

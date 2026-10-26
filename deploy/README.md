@@ -2,7 +2,7 @@
 
 ## October 26 Refinement Release
 
-This revision is prepared locally and has not been deployed. Verify the active account again and obtain production deployment approval before publishing it. It requires no infrastructure or service changes.
+The refinement in 3678805 and the mobile filter correction in 4893308 were deployed on October 26, 2026 after explicit approval. The selected existing account was verified before each phase. Backend code was updated using the existing infrastructure template, followed by the production frontend. Existing resource physical IDs, operator imports, original financial summaries, the public demo, and its saved AI case were preserved. No new service or credential was created. Future production updates still require explicit approval and account verification.
 
 Deploy the backend before publishing the frontend. The revised interface uses the new `status=unresolved` case filter; an older backend will interpret that value as a literal review status and return an empty list. Rebuild the backend ZIP, apply the explicit update-backend phase, check the filter and public write denial, then publish the frontend and repeat the hosted checks. Run the updated checks only after this release is deployed; they target the refined screens. Preserve the existing operator and synthetic databases. No new provider call is required to verify saved AI presentation.
 

@@ -2,7 +2,7 @@
 
 ReconcileOS helps finance officers compare order, payment, and settlement exports, investigate differences, and document their decisions. The initial audience is small and medium-sized businesses in Ghana that accept payments through several channels.
 
-The October 26 refinement improves typography, dashboard priorities, evidence comparison, saved AI investigations, results navigation, and reporting. See the [audit](docs/refinement-audit.md), [verification record](docs/testing.md), and [two-minute demonstration](docs/release-demo.md). This revision has not been deployed to AWS; production publication requires explicit approval.
+The October 26 refinement improves typography, dashboard priorities, evidence comparison, saved AI investigations, results navigation, and reporting. It is deployed to the existing AWS demonstration after explicit approval. See the [audit](docs/refinement-audit.md), [verification record](docs/testing.md), and [two-minute demonstration](docs/release-demo.md).
 
 This proof of concept supports order, payment, and settlement CSV/Excel imports, format recognition, column mapping, reasoned preview corrections, deterministic reconciliation, fee checks, a dashboard, source evidence, and durable persistence. Human investigation notes, review decisions, explicit manual reversal, application audit history, and CSV reports are implemented. Optional OpenAI investigation assistance returns validated hypotheses that remain subject to human review.
 
@@ -128,4 +128,4 @@ The installed Build With AI: Basics Learn Skill Pack is sourced from challengepo
 
 The learner approved the ordered [5-build checklist](devpost/checklist.md) and fast mode. All four implementation slices are implemented and mechanically checked. Early hands-on feedback produced the flexible importer revision. The learner retry, final review, and learning wrap-up remain tracked there. Personal learner context is excluded from commits. AI-assisted development is documented truthfully through this workflow; application AI functionality is described separately above.
 
-The source repository is public under joelanarba/reconcileos. The demo video, learner-written submission fields, final learning wrap-up, and learner submission remain pending. A factual [preparation checklist](docs/submission-checklist.md) and [demo operations guide](docs/demo.md) are included. The existing AWS deployment is verified separately; this refinement still needs production deployment approval. No Devpost submission is claimed.
+The source repository is public under joelanarba/reconcileos. The demo video, learner-written submission fields, final learning wrap-up, and learner submission remain pending. A factual [preparation checklist](docs/submission-checklist.md) and [demo operations guide](docs/demo.md) are included. The refined AWS release was deployed and verified after approval. No Devpost submission is claimed.
